@@ -1,0 +1,39 @@
+{
+  "buildCommand": "npm run build",
+  "env": {
+    "NEXT_PUBLIC_API_URL": {
+      "description": "Backend API URL",
+      "value": "https://invoiceghost-backend.onrender.com"
+    },
+    "NEXT_PUBLIC_GUMROAD_URL": {
+      "description": "Gumroad product URL",
+      "value": "https://gumroad.com/l/invoiceghost"
+    }
+  },
+  "framework": "nextjs",
+  "headers": [
+    {
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ],
+      "source": "/(.*)"
+    }
+  ],
+  "outputDirectory": ".next",
+  "regions": ["hkg1"]
+}
