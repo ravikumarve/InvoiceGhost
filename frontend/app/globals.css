@@ -58,3 +58,62 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Landing Page Styles */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Marquee Animation */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 28s linear infinite;
+}
+
+/* Custom font classes for landing page */
+.font-serif {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+/* Stroke utility for text outline */
+.stroke-amber-500\/8 {
+  -webkit-text-stroke: 1px rgba(212, 132, 10, 0.08);
+}
+
+.stroke-amber-500\/7 {
+  -webkit-text-stroke: 1px rgba(212, 132, 10, 0.07);
+}
+
+/* Duration utilities */
+.duration-180 {
+  transition-duration: 180ms;
+}
+
+.duration-600 {
+  transition-duration: 600ms;
+}
+
+.duration-700 {
+  transition-duration: 700ms;
+}
+
+/* Delay utilities */
+.delay-75 {
+  transition-delay: 75ms;
+}
+
+.delay-150 {
+  transition-delay: 150ms;
+}
+
+.delay-200 {
+  transition-delay: 200ms;
+}
+
+.delay-300 {
+  transition-delay: 300ms;
+}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Navigation from '@/components/Navigation';
 import InvoiceCard from '@/components/InvoiceCard';
 import ExportBar from '@/components/ExportBar';
 import GumroadBadge from '@/components/GumroadBadge';
@@ -36,22 +37,10 @@ export default function ResultPage() {
   if (error) {
     return (
       <div className="min-h-screen flex flex-col bg-zinc-950">
-        {/* Header */}
-        <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center">
-                  <span className="text-zinc-900 font-bold text-sm">IG</span>
-                </div>
-                <h1 className="text-xl font-semibold text-zinc-100">InvoiceGhost</h1>
-              </div>
-            </div>
-          </div>
-        </header>
+        <Navigation />
 
         {/* Error Content */}
-        <main className="flex-1 flex items-center justify-center p-4">
+        <main className="flex-1 flex items-center justify-center p-4 pt-20">
           <div className="w-full max-w-md">
             <div className="flex items-center space-x-3 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
               <AlertCircle className="w-5 h-5 text-red-500" />
@@ -76,22 +65,10 @@ export default function ResultPage() {
   if (!invoiceData) {
     return (
       <div className="min-h-screen flex flex-col bg-zinc-950">
-        {/* Header */}
-        <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center">
-                  <span className="text-zinc-900 font-bold text-sm">IG</span>
-                </div>
-                <h1 className="text-xl font-semibold text-zinc-100">InvoiceGhost</h1>
-              </div>
-            </div>
-          </div>
-        </header>
+        <Navigation />
 
         {/* Loading Content */}
-        <main className="flex-1 flex items-center justify-center p-4">
+        <main className="flex-1 flex items-center justify-center p-4 pt-20">
           <div className="text-center">
             <div className="inline-block w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mb-4" />
             <p className="text-zinc-400">Loading invoice data...</p>
@@ -105,31 +82,10 @@ export default function ResultPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-zinc-950">
-      {/* Header */}
-      <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center">
-                <span className="text-zinc-900 font-bold text-sm">IG</span>
-              </div>
-              <h1 className="text-xl font-semibold text-zinc-100">InvoiceGhost</h1>
-            </div>
-            
-            <button
-              onClick={handleBack}
-              className="flex items-center space-x-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-lg font-medium transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Upload New Invoice</span>
-              <span className="sm:hidden">New</span>
-            </button>
-          </div>
-        </div>
-      </header>
+      <Navigation />
 
       {/* Main Content */}
-      <main className="flex-1 py-8 px-4 sm:px-6 lg:px-8">
+      <main className="flex-1 py-8 px-4 sm:px-6 lg:px-8 pt-20">
         <div className="max-w-7xl mx-auto space-y-8">
           {/* Invoice Card */}
           <InvoiceCard invoiceData={invoiceData} />

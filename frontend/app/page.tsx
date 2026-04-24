@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Navigation from '@/components/Navigation';
 import UploadZone from '@/components/UploadZone';
 import { parseInvoice } from '@/lib/api';
 import { InvoiceData } from '@/lib/types';
@@ -37,25 +38,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-zinc-950">
-      {/* Header */}
-      <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center">
-                <span className="text-zinc-900 font-bold text-sm">IG</span>
-              </div>
-              <h1 className="text-xl font-semibold text-zinc-100">InvoiceGhost</h1>
-            </div>
-            <div className="text-sm text-zinc-400">
-              Privacy-First Invoice Parser
-            </div>
-          </div>
-        </div>
-      </header>
+      <Navigation />
 
       {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-8">
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-8 pt-20">
         <div className="w-full max-w-4xl space-y-8">
           {/* Hero Section */}
           <div className="text-center space-y-4">
