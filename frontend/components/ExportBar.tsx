@@ -27,7 +27,6 @@ export default function ExportBar({ invoiceData }: ExportBarProps) {
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Failed to export CSV:', error);
-      alert('Failed to export CSV. Please try again.');
     } finally {
       setIsExporting(false);
     }
@@ -48,57 +47,55 @@ export default function ExportBar({ invoiceData }: ExportBarProps) {
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border border-zinc-700 rounded-lg bg-zinc-900/50">
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={handleExportCSV}
-              disabled={isExporting}
-              className="flex items-center space-x-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-zinc-900 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isExporting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin" />
-                  <span>Exporting...</span>
-                </>
-              ) : (
-                <>
-                  <Download className="w-4 h-4" />
-                  <span>Export CSV</span>
-                </>
-              )}
-            </button>
-            
-            <button
-              onClick={handleCopyJSON}
-              className="flex items-center space-x-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-lg font-medium transition-colors"
-            >
-              {copied ? (
-                <>
-                  <Check className="w-4 h-4 text-green-500" />
-                  <span>Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-4 h-4" />
-                  <span>Copy JSON</span>
-                </>
-              )}
-            </button>
-          </div>
+      <div className="crosshair-panel flex flex-col sm:flex-row items-center justify-between gap-4 p-4">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleExportCSV}
+            disabled={isExporting}
+            className="btn-tech btn-primary-tech text-xs py-2 px-4 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isExporting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-[var(--bg-base)] border-t-transparent rounded-full animate-spin mr-2" />
+                <span>Exporting...</span>
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4 mr-2" />
+                <span>Export CSV</span>
+              </>
+            )}
+          </button>
+          
+          <button
+            onClick={handleCopyJSON}
+            className="btn-tech btn-outline-tech text-xs py-2 px-4"
+          >
+            {copied ? (
+              <>
+                <Check className="w-4 h-4 mr-2 text-[var(--accent-green)]" />
+                <span className="text-[var(--accent-green)]">Copied!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4 mr-2" />
+                <span>Copy JSON</span>
+              </>
+            )}
+          </button>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <div className="flex items-center space-x-2 px-4 py-2 bg-zinc-800 rounded-lg">
-            <Lock className="w-4 h-4 text-zinc-400" />
-            <span className="text-sm text-zinc-400">Batch Mode</span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 px-3 py-2 border border-[var(--border-main)] bg-[var(--bg-base)]">
+            <Lock className="w-4 h-4 text-[var(--text-tertiary)]" />
+            <span className="mono text-xs text-[var(--text-tertiary)] uppercase">Batch Mode</span>
           </div>
           
           <button
             onClick={handleUnlockBatchMode}
-            className="flex items-center space-x-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-amber-500 rounded-lg font-medium transition-colors"
+            className="btn-tech btn-outline-tech text-xs py-2 px-4 hover:text-[var(--accent-cyan)] hover:border-[var(--accent-cyan)]"
           >
-            <span>Unlock</span>
+            Unlock
           </button>
         </div>
       </div>

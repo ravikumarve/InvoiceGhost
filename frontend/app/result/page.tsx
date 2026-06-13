@@ -15,7 +15,6 @@ export default function ResultPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Retrieve the invoice data from sessionStorage
     const storedData = sessionStorage.getItem('invoiceghost_result');
     
     if (storedData) {
@@ -31,32 +30,29 @@ export default function ResultPage() {
   }, []);
 
   const handleBack = () => {
-    router.push('/');
+    router.push('/workspace');
   };
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col bg-zinc-950">
+      <div className="min-h-screen flex flex-col">
         <Navigation />
-
-        {/* Error Content */}
         <main className="flex-1 flex items-center justify-center p-4 pt-20">
           <div className="w-full max-w-md">
-            <div className="flex items-center space-x-3 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-              <AlertCircle className="w-5 h-5 text-red-500" />
-              <p className="text-sm text-red-400">{error}</p>
+            <div className="crosshair-panel p-4 flex items-center gap-3 border-[var(--accent-alert)]">
+              <AlertCircle className="w-5 h-5 text-[var(--accent-alert)]" />
+              <p className="mono text-sm text-[var(--accent-alert)]">{error}</p>
             </div>
             
             <button
               onClick={handleBack}
-              className="mt-4 w-full flex items-center justify-center space-x-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-lg font-medium transition-colors"
+              className="mt-4 w-full btn-tech btn-outline-tech py-3"
             >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Upload</span>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Workspace
             </button>
           </div>
         </main>
-
         <GumroadBadge />
       </div>
     );
@@ -64,29 +60,34 @@ export default function ResultPage() {
 
   if (!invoiceData) {
     return (
-      <div className="min-h-screen flex flex-col bg-zinc-950">
+      <div className="min-h-screen flex flex-col">
         <Navigation />
-
-        {/* Loading Content */}
         <main className="flex-1 flex items-center justify-center p-4 pt-20">
           <div className="text-center">
-            <div className="inline-block w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mb-4" />
-            <p className="text-zinc-400">Loading invoice data...</p>
+            <div className="inline-block w-8 h-8 border-2 border-[var(--accent-cyan)] border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="mono text-sm text-[var(--text-secondary)]">Loading extraction data...</p>
           </div>
         </main>
-
         <GumroadBadge />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-zinc-950">
+    <div className="min-h-screen flex flex-col">
       <Navigation />
 
-      {/* Main Content */}
-      <main className="flex-1 py-8 px-4 sm:px-6 lg:px-8 pt-20">
-        <div className="max-w-7xl mx-auto space-y-8">
+      <main className="flex-1 py-8 px-6 md:px-8 pt-20">
+        <div className="max-w-[1200px] mx-auto space-y-6">
+          {/* Back button */}
+          <button
+            onClick={handleBack}
+            className="btn-tech btn-outline-tech text-xs py-2 px-3 mb-2"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            New Extraction
+          </button>
+
           {/* Invoice Card */}
           <InvoiceCard invoiceData={invoiceData} />
           
@@ -95,16 +96,17 @@ export default function ResultPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-zinc-800 py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center text-sm text-zinc-500">
-            <p>Built with privacy in mind. No data retention. No tracking.</p>
+      <footer className="border-t border-[var(--border-main)] px-6 md:px-8 py-6">
+        <div className="max-w-[1200px] mx-auto flex justify-between items-center">
+          <div className="mono text-xs text-[var(--text-tertiary)]">
+            Built with privacy in mind. No data retention. No tracking.
+          </div>
+          <div className="mono text-xs text-[var(--text-tertiary)]">
+            SYSTEM: NOMINAL
           </div>
         </div>
       </footer>
 
-      {/* Gumroad Badge */}
       <GumroadBadge />
     </div>
   );

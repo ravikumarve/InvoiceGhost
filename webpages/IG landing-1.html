@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InvoiceGhost | Ethereal Extraction</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Monochromatic / Silver Palette */
+            --bg-void: #030303;
+            --surface: #0a0a0a;
+            --surface-glass: rgba(10, 10, 10, 0.5);
+            
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --text-tertiary: #555555;
+            
+            --grid-line: rgba(255, 255, 255, 0.04);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-void);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* 1. The Strict Grid Overlay */
+        .architectural-grid {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: 1;
+            background-image: 
+                linear-gradient(var(--grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 50px 50px;
+            background-position: center top;
+        }
+
+        /* 2. The Lusion-Style Liquid Mercury Background */
+        .liquid-mercury {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0;
+            overflow: hidden;
+            background: var(--bg-void);
+            filter: contrast(120%);
+        }
+
+        .mercury-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            background: rgba(255, 255, 255, 0.15);
+            animation: fluid-drift 25s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .m-1 { width: 45vw; height: 45vw; top: -10vh; left: -10vw; }
+        .m-2 { width: 55vw; height: 55vw; bottom: -20vh; right: -10vw; animation-delay: -7s; background: rgba(255, 255, 255, 0.1); }
+        .m-3 { width: 35vw; height: 35vw; top: 40vh; left: 30vw; animation-delay: -14s; background: rgba(255, 255, 255, 0.08); }
+
+        @keyframes fluid-drift {
+            0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+            50% { transform: translate(10vw, 10vh) scale(1.2) rotate(180deg); }
+            100% { transform: translate(-5vw, -10vh) scale(0.9) rotate(360deg); }
+        }
+
+        /* Particle Canvas */
+        #dust-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 1;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        /* Typography */
+        h1, h2, h3, h4, .serif {
+            font-family: 'Playfair Display', serif;
+            font-weight: 400;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .italic { font-style: italic; color: var(--text-secondary); }
+
+        /* Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        section { padding: 10rem 0; border-bottom: 1px solid var(--border-glass); }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem 0;
+            border-bottom: 1px solid var(--border-glass);
+            position: relative;
+            z-index: 100;
+        }
+
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: 1px;
+        }
+
+        .logo-mark {
+            width: 12px; height: 12px;
+            background: #fff;
+            border-radius: 50%;
+        }
+
+        .nav-links { display: flex; gap: 3rem; }
+        .nav-links a { color: var(--text-secondary); text-decoration: none; transition: color 0.4s ease; }
+        .nav-links a:hover { color: var(--text-primary); }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.8rem 2.5rem;
+            border: 1px solid var(--border-hover);
+            border-radius: 100px;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(10px);
+            background: rgba(255,255,255,0.02);
+            cursor: pointer;
+        }
+
+        .btn:hover { background: #ffffff; color: #000000; transform: translateY(-2px); }
+        .btn-solid { background: #ffffff; color: #000000; }
+        .btn-solid:hover { background: transparent; color: #ffffff; border-color: #ffffff; }
+
+        /* Hero Section */
+        .hero {
+            min-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding-bottom: 5vh;
+        }
+
+        .hero-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--text-tertiary);
+            margin-bottom: 2rem;
+        }
+
+        .hero-meta::before, .hero-meta::after { content: ''; width: 30px; height: 1px; background: var(--text-tertiary); }
+
+        .hero h1 { font-size: clamp(4rem, 7vw, 7rem); line-height: 1.1; margin-bottom: 2rem; max-width: 1000px; }
+        .hero p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            max-width: 550px;
+            line-height: 1.8;
+            margin-bottom: 3rem;
+            font-weight: 300;
+        }
+
+        /* Dropzone (Glass Pane) */
+        .workspace {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--surface-glass);
+            backdrop-filter: blur(30px);
+            border: 1px solid var(--border-glass);
+            border-radius: 2px;
+            padding: 1rem;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+        }
+
+        .dropzone {
+            border: 1px dashed var(--border-hover);
+            padding: 5rem 2rem;
+            text-align: center;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dropzone:hover { border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.02); }
+        .dz-title { font-size: 1.5rem; margin-bottom: 1rem; letter-spacing: 1px; }
+
+        /* Asymmetrical Split Section */
+        .split-section {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 6rem;
+            align-items: center;
+        }
+
+        .split-text h2 { font-size: 3.5rem; margin-bottom: 2rem; line-height: 1.2; }
+        .split-text p { color: var(--text-secondary); line-height: 1.8; font-size: 1.1rem; font-weight: 300; margin-bottom: 2rem; }
+
+        /* Code Block */
+        .code-window {
+            background: var(--surface);
+            border: 1px solid var(--border-glass);
+            padding: 3rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 2;
+            color: var(--text-secondary);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .code-window::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 3px; height: 100%;
+            background: #fff;
+        }
+
+        .cw-key { color: var(--text-primary); }
+        .cw-str { color: #a1a1aa; }
+        .cw-num { color: #d4d4d8; }
+
+        /* Grid Roster (Features) */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            border-top: 1px solid var(--border-glass);
+            border-left: 1px solid var(--border-glass);
+            margin-top: 4rem;
+        }
+
+        .feature-cell {
+            padding: 4rem 3rem;
+            border-right: 1px solid var(--border-glass);
+            border-bottom: 1px solid var(--border-glass);
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            transition: background 0.4s ease;
+        }
+
+        .feature-cell:hover { background: rgba(255,255,255,0.03); }
+        .f-num { margin-bottom: 2rem; color: var(--text-tertiary); }
+        .feature-cell h3 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+        .feature-cell p { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; font-weight: 300; }
+
+        /* The Blueprint Section */
+        .blueprint-section {
+            padding: 10rem 0;
+            border-bottom: 1px solid var(--border-glass);
+        }
+        
+        .blueprint-header {
+            text-align: center;
+            margin-bottom: 6rem;
+        }
+
+        .blueprint-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4rem;
+            position: relative;
+        }
+
+        .blueprint-step h3 { font-size: 2rem; margin-bottom: 1.5rem; display: flex; align-items: baseline; gap: 10px; }
+        .blueprint-step h3 span { font-size: 1rem; color: var(--text-tertiary); font-family: 'JetBrains Mono', monospace; }
+        .blueprint-step p { color: var(--text-secondary); line-height: 1.7; font-weight: 300; }
+
+        /* ROI Matrix */
+        .pricing-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: transparent;
+            border: 1px solid var(--border-hover);
+            padding: 5rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .pricing-container::before, .pricing-container::after {
+            content: '+'; position: absolute; color: var(--text-tertiary);
+            font-family: 'JetBrains Mono', monospace; font-size: 1.5rem;
+        }
+        .pricing-container::before { top: -12px; left: -8px; }
+        .pricing-container::after { bottom: -12px; right: -8px; }
+
+        .price-val { font-size: 5rem; margin: 2rem 0; font-family: 'Playfair Display', serif; }
+        .price-val span { font-size: 1.5rem; color: var(--text-secondary); font-family: 'Inter', sans-serif; font-style: italic; }
+
+        .price-list { list-style: none; margin-bottom: 3rem; text-align: left; }
+        .price-list li { padding: 1rem 0; border-bottom: 1px solid var(--border-glass); color: var(--text-secondary); display: flex; justify-content: space-between; }
+        .price-list li span:last-child { color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
+
+        /* FAQ Section */
+        .faq-section {
+            padding: 10rem 0;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .faq-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 6rem;
+            align-items: flex-start;
+        }
+
+        .faq-list {
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+        }
+
+        .faq-item h4 { font-size: 1.5rem; margin-bottom: 1rem; font-family: 'Inter', sans-serif; font-weight: 400; }
+        .faq-item p { color: var(--text-secondary); line-height: 1.7; font-weight: 300; }
+
+        /* Final CTA */
+        .footer-cta {
+            padding: 12rem 0;
+            text-align: center;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .footer-cta h2 { font-size: 6rem; margin-bottom: 3rem; }
+
+        /* Deep Architectural Footer */
+        footer {
+            padding: 6rem 0 3rem;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 4rem;
+        }
+
+        .footer-brand p { color: var(--text-secondary); font-weight: 300; line-height: 1.7; margin-top: 1.5rem; max-width: 300px; }
+        
+        .footer-col h5 { font-size: 0.85rem; font-family: 'JetBrains Mono', monospace; color: var(--text-tertiary); margin-bottom: 2rem; letter-spacing: 2px; }
+        .footer-col ul { list-style: none; }
+        .footer-col ul li { margin-bottom: 1rem; }
+        .footer-col ul a { color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; transition: color 0.3s; }
+        .footer-col ul a:hover { color: var(--text-primary); }
+
+        .footer-bottom {
+            margin-top: 6rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-glass);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-tertiary);
+        }
+
+        @media (max-width: 1024px) {
+            .split-section, .faq-grid { grid-template-columns: 1fr; gap: 4rem; }
+            .features-grid { grid-template-columns: 1fr 1fr; }
+            .blueprint-grid { grid-template-columns: 1fr; gap: 3rem; }
+            footer { grid-template-columns: 1fr 1fr; gap: 4rem; }
+        }
+
+        @media (max-width: 768px) {
+            nav { flex-direction: column; gap: 1.5rem; padding: 1.5rem 0; }
+            .hero h1 { font-size: 3.5rem; }
+            .dropzone { padding: 3rem 1rem; }
+            .features-grid { grid-template-columns: 1fr; border-left: none; }
+            .feature-cell { border-right: none; border-left: 1px solid var(--border-glass); }
+            .pricing-container { padding: 3rem 2rem; border-left: none; border-right: none; }
+            .footer-cta h2 { font-size: 4rem; }
+            footer { grid-template-columns: 1fr; text-align: center; }
+            .footer-brand p { margin: 1.5rem auto; }
+            .footer-bottom { flex-direction: column; gap: 1rem; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="liquid-mercury">
+        <div class="mercury-orb m-1"></div>
+        <div class="mercury-orb m-2"></div>
+        <div class="mercury-orb m-3"></div>
+    </div>
+
+    <canvas id="dust-canvas"></canvas>
+
+    <div class="architectural-grid"></div>
+
+    <div class="container">
+        
+        <nav>
+            <a href="#" class="logo">
+                <div class="logo-mark"></div>
+                Ghost Agency
+            </a>
+            <div class="nav-links mono">
+                <a href="#philosophy">Philosophy</a>
+                <a href="#architecture">Architecture</a>
+                <a href="#blueprint">Blueprint</a>
+                <a href="#faq">FAQ</a>
+            </div>
+            <a href="https://gumroad.com" class="btn mono" style="font-size: 0.75rem; padding: 0.6rem 1.5rem;">Access Platform</a>
+        </nav>
+
+        <section class="hero">
+            <div class="hero-meta mono">NVIDIA NIM & OLLAMA CORE</div>
+            <h1>The invisible <br><span class="italic text-secondary">workforce.</span></h1>
+            <p>Stop selling software. Start renting specialized AI employees to businesses for $500–$2,500/month. The ultimate high-margin B2B agency model.</p>
+            
+            <div class="workspace">
+                <div class="dropzone">
+                    <div class="serif dz-title">Initialize Registry</div>
+                    <div class="mono" style="color: var(--text-tertiary);">DEPLOY SUPPORT AGENT VIA TERMINAL</div>
+                </div>
+            </div>
+            <div class="mono" style="margin-top: 1.5rem; color: var(--text-tertiary); font-size: 0.75rem;">AGENTS OPERATE 24/7 IN THE BACKGROUND</div>
+        </section>
+
+        <section id="philosophy">
+            <div class="split-section">
+                <div class="split-text">
+                    <h2>Silence the <span class="italic text-secondary">chaos.</span></h2>
+                    <p>Imagine a small business paying you $800/month for a dedicated customer support agent. The AI handles tickets, emails, and live chat 24/7 without taking a single break.</p>
+                    <p>You are not selling a SaaS subscription. You are providing a labor replacement at a fraction of the human cost. Your actual compute cost to run this AI via the Ghost platform? Roughly eight dollars.</p>
+                    <a href="#pricing" class="btn btn-solid mono" style="margin-top: 1rem;">View Economics</a>
+                </div>
+                
+                <div class="code-window">
+                    <div style="color: var(--text-tertiary); margin-bottom: 1.5rem;">// TERMINAL: DEPLOYMENT LOG</div>
+                    <span class="cw-num">></span> initializing ghost_registry...<br>
+                    <span class="cw-num">></span> verifying local environment...<br>
+                    <span class="cw-num">></span> connecting nvidia_nim api...<br>
+                    <br>
+                    <span class="cw-key">PYTHONPATH=. python deploy.py --agent="support"</span><br>
+                    <br>
+                    <span class="cw-str">[OK]</span> Model loaded successfully.<br>
+                    <span class="cw-str">[OK]</span> Knowledge base indexing complete.<br>
+                    <span class="cw-str">[OK]</span> Webhooks bound to client CRM.<br>
+                    <br>
+                    <span style="color: #fff;">Status:</span> ONLINE<br>
+                    <span style="color: #fff;">Retainer:</span> $800/mo<br>
+                    <span style="color: #fff;">Compute Overhead:</span> $0.26/day
+                </div>
+            </div>
+        </section>
+
+        <section id="architecture">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h2>System <span class="italic text-secondary">Roster</span>.</h2>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-cell">
+                    <div class="f-num mono">01 / SUPPORT</div>
+                    <h3 class="serif">Support Agent</h3>
+                    <p>Handles tier 1 & 2 support tickets, billing inquiries, and technical troubleshooting 24/7 based strictly on the client's localized knowledge base.</p>
+                </div>
+                <div class="feature-cell">
+                    <div class="f-num mono">02 / SALES</div>
+                    <h3 class="serif">Sales Dev Rep</h3>
+                    <p>Qualifies inbound leads, executes personalized cold outreach sequences, and books meetings directly onto the client's calendar autonomously.</p>
+                </div>
+                <div class="feature-cell">
+                    <div class="f-num mono">03 / MARKETING</div>
+                    <h3 class="serif">Content Manager</h3>
+                    <p>Generates brand-aligned social media posts, writes SEO-optimized blog content, and schedules automated cross-platform distribution.</p>
+                </div>
+                <div class="feature-cell">
+                    <div class="f-num mono">04 / OPERATIONS</div>
+                    <h3 class="serif">Operations Exec</h3>
+                    <p>Acts as an internal executive assistant. Handles complex scheduling, project routing, and internal cross-department communication workflows.</p>
+                </div>
+                <div class="feature-cell">
+                    <div class="f-num mono">05 / DATA</div>
+                    <h3 class="serif">Financial Analyst</h3>
+                    <p>Connects to Stripe or QuickBooks APIs. Generates weekly cash flow reports, identifies churn risks, and visualizes runway data.</p>
+                </div>
+                <div class="feature-cell">
+                    <div class="f-num mono">06 / CUSTOM</div>
+                    <h3 class="serif">Custom Agents</h3>
+                    <p>The core registry is architected to scale. Build and deploy bespoke agents tailored exactly to high-ticket enterprise client needs.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="blueprint" class="blueprint-section">
+            <div class="blueprint-header">
+                <h2>The <span class="italic text-secondary">Blueprint.</span></h2>
+            </div>
+
+            <div class="blueprint-grid">
+                <div class="blueprint-step">
+                    <h3><span>01.</span> Prospecting</h3>
+                    <p>Identify local businesses, e-commerce stores, or agencies suffering from slow response times or high administrative bloat. Look for companies drowning in low-tier support tickets.</p>
+                </div>
+                <div class="blueprint-step">
+                    <h3><span>02.</span> The Pitch</h3>
+                    <p>Do not sell "AI". Sell outcomes. Offer to replace their $4,000/month entry-level support desk with a dedicated, flawless agent that operates 24/7 for a flat $800/month retainer.</p>
+                </div>
+                <div class="blueprint-step">
+                    <h3><span>03.</span> Deployment</h3>
+                    <p>Upload the client's FAQ and documentation to the Ghost Registry. Run the deployment script. Connect the webhook to their Zendesk or Email. Collect your monthly retainer.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="pricing" style="padding-bottom: 5rem;">
+            <div class="pricing-container">
+                <h2 class="serif" style="font-size: 3.5rem; margin-bottom: 1rem;">The Matrix</h2>
+                <p style="color: var(--text-secondary); font-size: 1.1rem; font-weight: 300;">Calculate your monthly recurring revenue (MRR) based on an average $1,000/month retainer per client.</p>
+                
+                <div class="price-val">$49k<span> / mo profit</span></div>
+                
+                <ul class="price-list">
+                    <li>05 Deployed Clients <span>$4,960 PROFIT</span></li>
+                    <li>10 Deployed Clients <span>$9,920 PROFIT</span></li>
+                    <li>20 Deployed Clients <span>$19,840 PROFIT</span></li>
+                    <li>50 Deployed Clients <span>$49,600 PROFIT</span></li>
+                </ul>
+
+                <a href="https://gumroad.com" class="btn btn-solid mono" style="width: 100%; padding: 1.2rem;">Acquire License</a>
+            </div>
+        </section>
+
+        <section id="faq" class="faq-section">
+            <div class="faq-grid">
+                <div>
+                    <h2>Frequently <br><span class="italic text-secondary">Asked.</span></h2>
+                </div>
+                
+                <div class="faq-list">
+                    <div class="faq-item">
+                        <h4>Do I need to know how to code?</h4>
+                        <p>No. Ghost Agency is designed to be deployed via simple command-line prompts. If you can type `python deploy.py`, you can run this agency. We provide comprehensive, step-by-step video documentation.</p>
+                    </div>
+                    <div class="faq-item">
+                        <h4>How do I bill my clients?</h4>
+                        <p>You own the relationship. You bill your clients directly using Stripe, Razorpay, or standard invoicing software. Ghost Agency does not take a percentage of your retainers. You keep 100% of the revenue.</p>
+                    </div>
+                    <div class="faq-item">
+                        <h4>What if the AI hallucinates or lies?</h4>
+                        <p>Our agents utilize strict Retrieval-Augmented Generation (RAG). They are cryptographically locked to the knowledge base you provide for the client. If the answer isn't in the documentation, the AI is programmed to escalate to a human rather than guess.</p>
+                    </div>
+                    <div class="faq-item">
+                        <h4>Are there ongoing platform fees?</h4>
+                        <p>Ghost Agency is a one-time purchase. Your only ongoing costs are the API requests made to NVIDIA NIM or OpenAI (which average pennies per day). Alternatively, you can run the models entirely for free locally using the included Ollama integration.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="footer-cta">
+            <h2>Turn AI into your <br><span class="italic text-secondary">invisible workforce.</span></h2>
+            <a href="https://gumroad.com" class="btn btn-solid mono" style="font-size: 1rem; padding: 1.2rem 3rem; margin-top: 2rem;">Start Your Agency</a>
+        </section>
+
+        <footer>
+            <div class="footer-brand">
+                <a href="#" class="logo">
+                    <div class="logo-mark"></div>
+                    Ghost Agency
+                </a>
+                <p>Rent specialized AI employees to businesses. Keep 95% profit margins. Built for modern entrepreneurs operating on the frontier.</p>
+            </div>
+            
+            <div class="footer-col">
+                <h5 class="mono">PLATFORM</h5>
+                <ul>
+                    <li><a href="#philosophy">The Arbitrage</a></li>
+                    <li><a href="#architecture">AI Roster</a></li>
+                    <li><a href="#pricing">Economics Matrix</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h5 class="mono">RESOURCES</h5>
+                <ul>
+                    <li><a href="#">Business Blueprint</a></li>
+                    <li><a href="#">Developer Docs</a></li>
+                    <li><a href="https://ollama.ai">Ollama Integration</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h5 class="mono">LEGAL</h5>
+                <ul>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                    <li><a href="#">License Agreement</a></li>
+                </ul>
+            </div>
+        </footer>
+
+        <div class="footer-bottom mono">
+            <div>© 2026 GHOST AGENCY. ALL RIGHTS RESERVED.</div>
+            <div style="color: #888;">SYSTEM: NOMINAL</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('dust-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width, height;
+        let particles = [];
+        let mouse = { x: null, y: null };
+
+        function init() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            particles = [];
+            
+            const count = Math.floor((width * height) / 10000);
+            
+            for(let i = 0; i < count; i++) {
+                particles.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    radius: Math.random() * 1.5 + 0.5,
+                    vx: (Math.random() - 0.5) * 0.15,
+                    vy: (Math.random() - 0.5) * 0.15,
+                    phase: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        window.addEventListener('mousemove', e => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        window.addEventListener('mouseout', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, width, height);
+
+            particles.forEach((p, index) => {
+                p.x += p.vx + Math.sin(p.phase) * 0.1;
+                p.y += p.vy + Math.cos(p.phase) * 0.1;
+                p.phase += 0.01;
+
+                if(p.x < -10) p.x = width + 10;
+                if(p.x > width + 10) p.x = -10;
+                if(p.y < -10) p.y = height + 10;
+                if(p.y > height + 10) p.y = -10;
+
+                if (mouse.x != null) {
+                    let dx = mouse.x - p.x;
+                    let dy = mouse.y - p.y;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist < 150) {
+                        p.x -= (dx/dist) * 0.3;
+                        p.y -= (dy/dist) * 0.3;
+                    }
+                }
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.globalAlpha = 0.2 + Math.sin(p.phase) * 0.1;
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+
+                for(let j = index + 1; j < particles.length; j++) {
+                    const p2 = particles[j];
+                    const dx = p.x - p2.x;
+                    const dy = p.y - p2.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+
+                    if(dist < 100) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.globalAlpha = 0.05 - (dist / 2000);
+                        ctx.lineWidth = 0.5;
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                        ctx.globalAlpha = 1.0;
+                    }
+                }
+            });
+        }
+
+        window.addEventListener('resize', init);
+        init();
+        animate();
+    </script>
+</body>
+</html>

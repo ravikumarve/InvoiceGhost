@@ -1,10 +1,17 @@
 """License key validation endpoint.
 
 This module handles the POST /api/validate-key endpoint which:
-- Validates Gumroad license keys using HMAC
-- No database required - validation is local
-- Rate limited to prevent abuse
+- Validates Gumroad license keys using HMAC-SHA256
+- Uses constant-time comparison to prevent timing attacks
+- No database required — validation is local
+- Rate limited to prevent brute force
 - Returns validation result without storing the key
+
+Security model:
+- A known set of valid license key hashes is pre-computed from the HMAC secret
+- The server computes HMAC-SHA256(secret, license_key) and compares
+  against the expected hash using constant-time comparison
+- This prevents timing side-channel attacks
 """
 
 import logging
@@ -14,8 +21,6 @@ import hashlib
 
 from fastapi import APIRouter, status, Request
 from fastapi.responses import JSONResponse
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 from pydantic import BaseModel, Field
 
 # Configure logging - NEVER log license keys
@@ -23,17 +28,23 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Constants from environment
-RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "10"))
 LICENSE_KEY_HMAC_SECRET = os.getenv("LICENSE_KEY_HMAC_SECRET", "")
 
-# Initialize router and rate limiter
+# Initialize router — NO duplicate limiter (uses app-level SlowAPIMiddleware)
 router = APIRouter()
-limiter = Limiter(key_func=get_remote_address)
+
+# Minimum license key length to prevent trivial brute force
+MIN_KEY_LENGTH = 20
 
 
 class LicenseKeyRequest(BaseModel):
     """Request model for license key validation."""
-    license_key: str = Field(..., min_length=1, description="Gumroad license key to validate")
+    license_key: str = Field(
+        ..., 
+        min_length=1, 
+        max_length=256,  # Prevent absurdly long keys
+        description="Gumroad license key to validate"
+    )
 
 
 class LicenseKeyResponse(BaseModel):
@@ -42,56 +53,74 @@ class LicenseKeyResponse(BaseModel):
     message: str
 
 
+def _compute_hmac(key: str) -> str:
+    """Compute HMAC-SHA256 of a license key using the secret.
+    
+    Args:
+        key: The license key string
+        
+    Returns:
+        Hex digest of HMAC-SHA256
+    """
+    return hmac.new(
+        LICENSE_KEY_HMAC_SECRET.encode(),
+        key.encode(),
+        hashlib.sha256
+    ).hexdigest()
+
+
 def validate_license_key(license_key: str) -> bool:
     """
-    Validate a Gumroad license key using HMAC.
+    Validate a Gumroad license key using HMAC with constant-time comparison.
     
-    This function validates the license key locally without making external API calls.
-    The validation is done using HMAC-SHA256 with a secret key.
+    The validation flow:
+    1. Check HMAC secret is configured
+    2. Check minimum key length
+    3. Compute HMAC-SHA256(secret, license_key)
+    4. Compare against known valid hashes using constant-time comparison
+    
+    To add valid license keys:
+    - Run: python -c "import hmac, hashlib; print(hmac.new(b'YOUR_SECRET', b'LICENSE_KEY', hashlib.sha256).hexdigest())"
+    - Add the hash to VALID_KEY_HASHES below
     
     Args:
         license_key: The license key to validate
         
     Returns:
         True if the license key is valid, False otherwise
-        
-    Note:
-        - This is a simplified validation for demonstration
-        - In production, you would implement proper Gumroad license key validation
-        - The actual validation logic depends on your Gumroad product configuration
     """
     if not LICENSE_KEY_HMAC_SECRET:
         logger.warning("LICENSE_KEY_HMAC_SECRET not configured - license validation disabled")
         return False
     
-    if not license_key or len(license_key) < 10:
+    if not license_key or len(license_key) < MIN_KEY_LENGTH:
         return False
     
-    try:
-        # Create HMAC signature
-        hmac.new(
-            LICENSE_KEY_HMAC_SECRET.encode(),
-            license_key.encode(),
-            hashlib.sha256
-        ).hexdigest()
-        
-        # In a real implementation, you would:
-        # 1. Parse the license key format (Gumroad uses specific formats)
-        # 2. Verify the signature matches
-        # 3. Check if the license is active/not expired
-        # 4. Validate against Gumroad API if needed
-        
-        # For this demo, we'll accept any license key that looks valid
-        # In production, replace this with actual Gumroad validation
-        return len(license_key) >= 20 and license_key.isalnum()
-        
-    except Exception as e:
-        logger.error(f"License key validation error: {e}")
+    # Pre-computed valid key hashes (add your Gumroad license key hashes here)
+    # Generate with: python -c "import hmac, hashlib; print(hmac.new(b'YOUR_SECRET', b'YOUR_KEY', hashlib.sha256).hexdigest())"
+    VALID_KEY_HASHES = set(
+        h.strip() 
+        for h in os.getenv("VALID_LICENSE_HASHES", "").split(",") 
+        if h.strip()
+    )
+    
+    if not VALID_KEY_HASHES:
+        # No valid hashes configured — cannot validate any key
+        logger.warning("No VALID_LICENSE_HASHES configured - no keys can be validated")
         return False
+    
+    # Compute HMAC of the provided key
+    computed_hash = _compute_hmac(license_key)
+    
+    # Constant-time comparison against each valid hash
+    for valid_hash in VALID_KEY_HASHES:
+        if hmac.compare_digest(computed_hash, valid_hash):
+            return True
+    
+    return False
 
 
 @router.post("/validate-key")
-@limiter.limit(f"{RATE_LIMIT_PER_MINUTE}/minute")
 async def validate_key(request: Request, license_request: LicenseKeyRequest):
     """
     Validate a Gumroad license key.
@@ -103,9 +132,6 @@ async def validate_key(request: Request, license_request: LicenseKeyRequest):
     - License keys are never logged
     - No license keys are stored
     - Validation is done locally
-    
-    **Rate Limiting:**
-    - 10 requests per minute per IP address (configurable)
     
     **Request Body:**
     ```json
@@ -127,9 +153,6 @@ async def validate_key(request: Request, license_request: LicenseKeyRequest):
         
     Returns:
         JSON response with validation result
-        
-    Raises:
-        HTTPException: For validation errors
     """
     try:
         # Validate license key

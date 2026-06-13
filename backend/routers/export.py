@@ -1,19 +1,22 @@
+"""CSV export endpoint for invoice data.
+
+This module handles the POST /api/export/csv endpoint which:
+- Accepts InvoiceData JSON in request body
+- Generates CSV with proper formatting
+- Protects against CSV injection attacks
+- Returns CSV file download with proper headers
+"""
+
 from fastapi import APIRouter, HTTPException, Response, Request
 from pydantic import BaseModel
 from typing import Optional
 import csv
 import io
-from slowapi import Limiter
-from slowapi.util import get_remote_address
+from urllib.parse import quote
 from models.invoice import InvoiceData
-import os
 
 
 router = APIRouter()
-limiter = Limiter(key_func=get_remote_address)
-
-# Rate limit from environment
-RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "10"))
 
 
 class CSVExportRequest(BaseModel):
@@ -49,8 +52,41 @@ def format_number(value: Optional[float]) -> str:
     return f"{value:,.2f}"
 
 
+def sanitize_csv_field(value: str) -> str:
+    """
+    Sanitize a CSV field to prevent CSV injection attacks.
+    
+    CSV injection occurs when a cell starts with =, +, -, @, or tab/carriage return.
+    Excel, Google Sheets, and LibreOffice will interpret these as formulas.
+    
+    Mitigation: Prefix dangerous characters with a single quote,
+    which forces spreadsheet software to treat the cell as text.
+    """
+    if not value:
+        return value
+    
+    # Characters that trigger formula interpretation in spreadsheets
+    dangerous_prefixes = ('=', '+', '-', '@', '\t', '\r', '\n')
+    
+    if value.startswith(dangerous_prefixes):
+        # Prefix with single quote to force text interpretation
+        value = "'" + value
+    
+    return value
+
+
+def sanitize_filename(name: str) -> str:
+    """
+    Sanitize a filename to prevent path traversal and header injection.
+    
+    Removes all characters except alphanumeric, hyphens, and underscores.
+    """
+    safe = "".join(c for c in name if c.isalnum() or c in ('-', '_')).strip()
+    return safe or "unknown"
+
+
 def generate_csv_content(invoice_data: InvoiceData) -> str:
-    """Generate CSV content from InvoiceData.
+    """Generate CSV content from InvoiceData with injection protection.
     
     Args:
         invoice_data: The invoice data to convert to CSV
@@ -72,13 +108,13 @@ def generate_csv_content(invoice_data: InvoiceData) -> str:
         "Tax Rate"
     ])
     
-    # Write line items
+    # Write line items — sanitize each field against CSV injection
     for item in invoice_data.line_items:
         writer.writerow([
-            item.description or "",
-            item.hsn_sac or "",
+            sanitize_csv_field(item.description or ""),
+            sanitize_csv_field(item.hsn_sac or ""),
             format_number(item.quantity),
-            item.unit or "",
+            sanitize_csv_field(item.unit or ""),
             format_indian_currency(item.rate),
             format_indian_currency(item.amount),
             f"{item.tax_rate}%" if item.tax_rate is not None else ""
@@ -88,7 +124,7 @@ def generate_csv_content(invoice_data: InvoiceData) -> str:
     writer.writerow([])  # Empty row for separation
     writer.writerow(["", "", "", "", "Subtotal:", format_indian_currency(invoice_data.subtotal), ""])
     
-    # Write tax rows
+    # Write tax rows (only if they exist and are > 0)
     if invoice_data.cgst is not None and invoice_data.cgst > 0:
         writer.writerow(["", "", "", "", "CGST:", format_indian_currency(invoice_data.cgst), ""])
     if invoice_data.sgst is not None and invoice_data.sgst > 0:
@@ -104,13 +140,13 @@ def generate_csv_content(invoice_data: InvoiceData) -> str:
     # Write additional info
     if invoice_data.invoice_number:
         writer.writerow([])
-        writer.writerow(["Invoice Number:", invoice_data.invoice_number])
+        writer.writerow(["Invoice Number:", sanitize_csv_field(invoice_data.invoice_number)])
     if invoice_data.invoice_date:
-        writer.writerow(["Invoice Date:", invoice_data.invoice_date])
+        writer.writerow(["Invoice Date:", sanitize_csv_field(invoice_data.invoice_date)])
     if invoice_data.vendor_name:
-        writer.writerow(["Vendor:", invoice_data.vendor_name])
+        writer.writerow(["Vendor:", sanitize_csv_field(invoice_data.vendor_name)])
     if invoice_data.buyer_name:
-        writer.writerow(["Buyer:", invoice_data.buyer_name])
+        writer.writerow(["Buyer:", sanitize_csv_field(invoice_data.buyer_name)])
     
     csv_content = output.getvalue()
     output.close()
@@ -119,7 +155,6 @@ def generate_csv_content(invoice_data: InvoiceData) -> str:
 
 
 @router.post("/export/csv")
-@limiter.limit(f"{RATE_LIMIT_PER_MINUTE}/minute")
 async def export_csv(request: Request, csv_request: CSVExportRequest) -> Response:
     """Export invoice data as CSV file.
     
@@ -152,21 +187,24 @@ async def export_csv(request: Request, csv_request: CSVExportRequest) -> Respons
         # Generate CSV content
         csv_content = generate_csv_content(csv_request.invoice_data)
         
-        # Generate filename
+        # Generate sanitized filename
         invoice_number = csv_request.invoice_data.invoice_number or "unknown"
-        # Sanitize filename - remove special characters
-        safe_invoice_number = "".join(c for c in invoice_number if c.isalnum() or c in ('-', '_')).strip()
-        if not safe_invoice_number:
-            safe_invoice_number = "unknown"
-        filename = f"invoice_{safe_invoice_number}.csv"
+        safe_filename = sanitize_filename(invoice_number)
+        filename = f"invoice_{safe_filename}.csv"
         
-        # Return CSV file as response
+        # RFC 5987 encoded filename for proper handling of special chars
+        encoded_filename = quote(filename)
+        
+        # Return CSV file as response with proper Content-Disposition
         return Response(
             content=csv_content,
             media_type="text/csv",
             headers={
-                "Content-Disposition": f"attachment; filename={filename}",
-                "Content-Type": "text/csv; charset=utf-8"
+                # Both filename and filename* for maximum browser compatibility
+                "Content-Disposition": f"attachment; filename=\"{filename}\"; filename*=UTF-8''{encoded_filename}",
+                "Content-Type": "text/csv; charset=utf-8",
+                # Prevent browsers from sniffing content type
+                "X-Content-Type-Options": "nosniff",
             }
         )
         

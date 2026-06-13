@@ -1,8 +1,17 @@
-"""PDF to image conversion service with privacy-first temp file handling."""
+"""PDF to image conversion service with privacy-first temp file handling.
+
+This module:
+- Converts PDF first page to JPEG at 300 DPI
+- Validates PDF header before processing (early rejection of non-PDFs)
+- Handles password-protected, corrupted, and oversized PDFs
+- Guarantees temp file cleanup in finally blocks
+- Uses timeout protection for all conversion operations
+"""
 
 import asyncio
 import io
 import logging
+import shutil
 import tempfile
 from pathlib import Path
 from typing import Optional
@@ -56,12 +65,19 @@ async def convert_pdf_to_image(pdf_bytes: bytes) -> bytes:
             f"Maximum size is {MAX_FILE_SIZE_MB}MB."
         )
     
+    # Validate PDF header before attempting conversion
+    if not validate_pdf_header(pdf_bytes):
+        raise PDFConversionError(
+            "The file is not a valid PDF. "
+            "Please upload a PDF file."
+        )
+    
     # Create temp directory for PDF processing
     temp_dir = tempfile.mkdtemp(prefix="invoiceghost_pdf_")
     temp_path = Path(temp_dir)
     
     try:
-        # Write PDF bytes to temp file
+        # Write PDF bytes to temp file (required by pdf2image)
         pdf_path = temp_path / "input.pdf"
         pdf_path.write_bytes(pdf_bytes)
         
@@ -74,6 +90,7 @@ async def convert_pdf_to_image(pdf_bytes: bytes) -> bytes:
                 pdf_bytes,
                 dpi=PDF_DPI,
                 first_page=1,
+                last_page=1,  # Only first page
                 fmt="jpeg",
                 thread_count=1,  # Single thread for better stability
             ),
@@ -110,40 +127,41 @@ async def convert_pdf_to_image(pdf_bytes: bytes) -> bytes:
             "Try a smaller file or simpler PDF."
         )
         
+    except PDFConversionError:
+        # Re-raise our own errors
+        raise
+        
+    except ValueError:
+        # Re-raise validation errors
+        raise
+        
     except Exception as e:
-        error_msg = str(e)
+        error_msg = str(e).lower()
         
         # Handle specific PDF errors with user-friendly messages
-        if "password" in error_msg.lower() or "encrypted" in error_msg.lower():
+        if "password" in error_msg or "encrypted" in error_msg:
             logger.error("Password-protected PDF detected")
             raise PDFConversionError(
                 "Password-protected PDFs are not supported. "
                 "Please remove password protection and try again."
             )
             
-        elif "corrupt" in error_msg.lower() or "invalid" in error_msg.lower():
-            logger.error(f"Corrupted PDF detected: {e}")
+        elif "corrupt" in error_msg or "invalid" in error_msg or "not a pdf" in error_msg:
+            logger.error(f"Corrupted/invalid PDF: {e}")
             raise PDFConversionError(
                 "The PDF file appears to be corrupted or invalid. "
                 "Please try a different file."
             )
             
-        elif "not a pdf" in error_msg.lower() or "unrecognized" in error_msg.lower():
-            logger.error(f"Invalid PDF format: {e}")
-            raise PDFConversionError(
-                "The file is not a valid PDF. "
-                "Please upload a PDF file."
-            )
-            
         else:
             logger.error(f"PDF conversion failed: {e}")
             raise PDFConversionError(
-                f"Failed to process PDF: {error_msg}. "
-                "Please try a different file or contact support."
+                "Failed to process PDF. "
+                "Please try a different file or a clearer scan."
             )
             
     finally:
-        # Clean up temp directory and all files
+        # Clean up temp directory and ALL files — guaranteed
         _cleanup_temp_dir(temp_path)
 
 
@@ -151,6 +169,7 @@ def _cleanup_temp_dir(temp_path: Path) -> None:
     """
     Clean up temporary directory and all files.
     
+    Uses shutil.rmtree for robust recursive deletion.
     This ensures no PDF data persists after processing,
     maintaining privacy-first principles.
     
@@ -159,21 +178,8 @@ def _cleanup_temp_dir(temp_path: Path) -> None:
     """
     try:
         if temp_path.exists():
-            # Remove all files in directory
-            for file_path in temp_path.iterdir():
-                try:
-                    if file_path.is_file():
-                        file_path.unlink()
-                    elif file_path.is_dir():
-                        # Recursively remove subdirectories
-                        _cleanup_temp_dir(file_path)
-                except Exception as e:
-                    logger.warning(f"Failed to delete temp file {file_path}: {e}")
-            
-            # Remove directory itself
-            temp_path.rmdir()
+            shutil.rmtree(temp_path, ignore_errors=True)
             logger.debug(f"Cleaned up temp directory: {temp_path}")
-            
     except Exception as e:
         logger.error(f"Failed to clean up temp directory {temp_path}: {e}")
 
@@ -183,6 +189,7 @@ def validate_pdf_header(pdf_bytes: bytes) -> bool:
     Validate PDF file header to detect invalid files early.
     
     Checks for PDF magic number (%PDF-) at the start of file.
+    This catches files that claim to be PDFs but aren't.
     
     Args:
         pdf_bytes: Raw PDF file bytes
@@ -202,7 +209,7 @@ async def get_pdf_page_count(pdf_bytes: bytes) -> Optional[int]:
     """
     Get the number of pages in a PDF file.
     
-    This is useful for validation and logging purposes.
+    Uses low DPI for fast page count detection.
     
     Args:
         pdf_bytes: Raw PDF file bytes
@@ -210,40 +217,34 @@ async def get_pdf_page_count(pdf_bytes: bytes) -> Optional[int]:
     Returns:
         Number of pages, or None if detection fails
     """
-    try:
-        temp_dir = tempfile.mkdtemp(prefix="invoiceghost_pdf_count_")
-        temp_path = Path(temp_dir)
-        
-        try:
-            # Write PDF bytes to temp file
-            pdf_path = temp_path / "input.pdf"
-            pdf_path.write_bytes(pdf_bytes)
-            
-            # Get page count with timeout
-            page_count = await asyncio.wait_for(
-                asyncio.to_thread(
-                    convert_from_bytes,
-                    pdf_bytes,
-                    dpi=72,  # Low DPI for faster page count
-                    fmt="jpeg",
-                    thread_count=1,
-                ),
-                timeout=10.0
-            )
-            
-            count = len(page_count)
-            logger.info(f"PDF page count: {count}")
-            return count
-            
-        except asyncio.TimeoutError:
-            logger.warning("Page count detection timeout")
-            return None
-        except Exception as e:
-            logger.warning(f"Failed to get page count: {e}")
-            return None
-        finally:
-            _cleanup_temp_dir(temp_path)
-            
-    except Exception as e:
-        logger.error(f"Page count detection error: {e}")
+    if not validate_pdf_header(pdf_bytes):
         return None
+    
+    temp_dir = tempfile.mkdtemp(prefix="invoiceghost_pdf_count_")
+    temp_path = Path(temp_dir)
+    
+    try:
+        # Get page count with timeout and low DPI for speed
+        page_count = await asyncio.wait_for(
+            asyncio.to_thread(
+                convert_from_bytes,
+                pdf_bytes,
+                dpi=72,  # Low DPI for faster page count
+                fmt="jpeg",
+                thread_count=1,
+            ),
+            timeout=10.0
+        )
+        
+        count = len(page_count)
+        logger.info(f"PDF page count: {count}")
+        return count
+        
+    except asyncio.TimeoutError:
+        logger.warning("Page count detection timeout")
+        return None
+    except Exception as e:
+        logger.warning(f"Failed to get page count: {e}")
+        return None
+    finally:
+        _cleanup_temp_dir(temp_path)

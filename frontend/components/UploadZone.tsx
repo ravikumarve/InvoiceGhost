@@ -60,20 +60,19 @@ export default function UploadZone({ onFileSelect, isProcessing = false }: Uploa
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <div className="w-full">
       {!selectedFile ? (
         <div
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           className={`
-            relative border-2 border-dashed rounded-lg p-12
-            transition-all duration-200 ease-in-out
+            border border-dashed p-16 text-center transition-all duration-300 cursor-pointer
             ${isDragging 
-              ? 'border-amber-500 bg-amber-500/10 animate-pulse' 
-              : 'border-zinc-700 hover:border-zinc-600 bg-zinc-900/50'
+              ? 'border-[var(--accent-cyan)] bg-[rgba(0,240,255,0.02)]' 
+              : 'border-[var(--border-highlight)] bg-[rgba(10,10,10,0.8)] hover:border-[var(--accent-cyan)] hover:bg-[rgba(0,240,255,0.02)]'
             }
-            ${isProcessing ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}
+            ${isProcessing ? 'opacity-50 pointer-events-none' : ''}
           `}
         >
           <input
@@ -85,40 +84,36 @@ export default function UploadZone({ onFileSelect, isProcessing = false }: Uploa
             disabled={isProcessing}
           />
           
-          <div className="flex flex-col items-center justify-center space-y-4">
-            <div className={`
-              p-4 rounded-full
-              ${isDragging ? 'bg-amber-500/20' : 'bg-zinc-800'}
-              transition-colors duration-200
-            `}>
-              <Upload className={`w-8 h-8 ${isDragging ? 'text-amber-500' : 'text-zinc-400'}`} />
+          <div className="flex flex-col items-center justify-center gap-4">
+            {/* Technical Upload Icon */}
+            <div className={`w-12 h-12 border border-[var(--border-main)] flex items-center justify-center transition-colors ${
+              isDragging ? 'border-[var(--accent-cyan)] text-[var(--accent-cyan)]' : 'text-[var(--accent-cyan)]'
+            }`}>
+              <Upload className="w-6 h-6" />
             </div>
             
-            <div className="text-center space-y-2">
-              <p className="text-lg font-medium text-zinc-100">
-                {isDragging ? 'Drop your invoice here' : 'Upload your invoice'}
+            <div>
+              <p className="text-lg font-medium mb-1">
+                {isDragging ? 'Drop your invoice here' : 'Initialize Extraction'}
               </p>
-              <p className="text-sm text-zinc-400">
-                Drag and drop or click to browse
-              </p>
-              <p className="text-xs text-zinc-500">
-                Supports PDF, PNG, JPG, WEBP (Max 10MB)
+              <p className="mono text-xs text-[var(--text-tertiary)] uppercase">
+                Drag & Drop PDF, PNG, JPG (Max 10MB)
               </p>
             </div>
           </div>
         </div>
       ) : (
-        <div className="border border-zinc-700 rounded-lg p-4 bg-zinc-900/50">
+        <div className="border border-[var(--border-main)] bg-[var(--bg-panel)] p-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-zinc-800 rounded-lg">
-                <FileText className="w-5 h-5 text-amber-500" />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 border border-[var(--border-main)] flex items-center justify-center text-[var(--accent-cyan)]">
+                <FileText className="w-5 h-5" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-zinc-100 truncate">
+                <p className="text-sm font-medium truncate">
                   {selectedFile.name}
                 </p>
-                <p className="text-xs text-zinc-400">
+                <p className="mono text-xs text-[var(--text-tertiary)]">
                   {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                 </p>
               </div>
@@ -127,9 +122,9 @@ export default function UploadZone({ onFileSelect, isProcessing = false }: Uploa
             {!isProcessing && (
               <button
                 onClick={handleRemoveFile}
-                className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
+                className="p-2 hover:bg-[var(--bg-elevated)] transition-colors"
               >
-                <X className="w-4 h-4 text-zinc-400" />
+                <X className="w-4 h-4 text-[var(--text-secondary)]" />
               </button>
             )}
           </div>

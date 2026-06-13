@@ -2,8 +2,8 @@
 
 This module handles the POST /api/parse endpoint which:
 - Accepts multipart form data with file field
-- Validates file format, MIME type, and size
-- Converts PDF to image if needed
+- Validates file format, MIME type, and size (with magic bytes check)
+- Converts PDF to image if needed (with header validation)
 - Extracts structured invoice data using AI
 - Returns InvoiceData as JSON with processing time header
 - Ensures privacy by cleaning up temp files and never logging file contents
@@ -16,11 +16,9 @@ from typing import Optional
 
 from fastapi import APIRouter, File, UploadFile, HTTPException, status, Request
 from fastapi.responses import JSONResponse
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
 from services.extractor import extract_invoice
-from services.pdf_handler import convert_pdf_to_image, PDFConversionError
+from services.pdf_handler import convert_pdf_to_image, PDFConversionError, validate_pdf_header
 
 # Configure logging - NEVER log file contents
 logging.basicConfig(level=logging.INFO)
@@ -33,48 +31,84 @@ ALLOWED_EXTENSIONS = set(
     ext.strip().lower() 
     for ext in os.getenv("ALLOWED_EXTENSIONS", "pdf,png,jpg,jpeg,webp").split(",")
 )
-RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "10"))
 
-# MIME type mapping for validation
+# MIME type mapping — strict matching only
 MIME_TYPES = {
-    "pdf": "application/pdf",
-    "png": "image/png",
-    "jpg": "image/jpeg",
-    "jpeg": "image/jpeg",
-    "webp": "image/webp",
+    "pdf": {"application/pdf"},
+    "png": {"image/png"},
+    "jpg": {"image/jpeg"},
+    "jpeg": {"image/jpeg"},
+    "webp": {"image/webp"},
 }
 
-# Initialize router and rate limiter
+# Magic bytes for file format verification (prevents MIME spoofing)
+MAGIC_BYTES = {
+    "pdf": b"%PDF-",
+    "png": b"\x89PNG\r\n\x1a\n",
+    "jpg": b"\xff\xd8\xff",
+    "jpeg": b"\xff\xd8\xff",
+    "webp": b"RIFF",  # WebP files start with RIFF
+}
+
+# Initialize router — NO duplicate limiter (uses app-level SlowAPIMiddleware)
 router = APIRouter()
-limiter = Limiter(key_func=get_remote_address)
 
 
-def _get_file_extension(filename: str) -> str:
-    """Extract file extension from filename."""
+def _get_file_extension(filename: Optional[str]) -> str:
+    """Extract file extension from filename, returns empty string if no filename."""
+    if not filename:
+        return ""
     return Path(filename).suffix.lower().lstrip(".")
 
 
-def _validate_file_extension(filename: str) -> bool:
+def _validate_file_extension(filename: Optional[str]) -> bool:
     """Validate file extension is in allowed list."""
     ext = _get_file_extension(filename)
     return ext in ALLOWED_EXTENSIONS
 
 
-def _validate_mime_type(filename: str, content_type: str) -> bool:
-    """Validate MIME type matches file extension."""
-    ext = _get_file_extension(filename)
-    expected_mime = MIME_TYPES.get(ext)
+def _validate_mime_type(filename: Optional[str], content_type: Optional[str]) -> bool:
+    """
+    Validate MIME type matches file extension — strict matching.
     
-    if not expected_mime:
+    No wildcard prefix matching. The MIME type must exactly match
+    the expected type for the given extension.
+    """
+    if not content_type:
         return False
     
-    # Allow both exact match and common variations
-    return content_type == expected_mime or content_type.startswith(expected_mime.split("/")[0])
+    ext = _get_file_extension(filename)
+    expected_mimes = MIME_TYPES.get(ext, set())
+    
+    if not expected_mimes:
+        return False
+    
+    return content_type in expected_mimes
+
+
+def _validate_magic_bytes(file_bytes: bytes, ext: str) -> bool:
+    """
+    Validate file magic bytes match the claimed extension.
+    
+    This prevents MIME type spoofing attacks where a malicious file
+    claims to be a PDF but is actually an executable.
+    """
+    magic = MAGIC_BYTES.get(ext)
+    if not magic:
+        # If we don't have magic bytes for this extension, skip check
+        return True
+    
+    if len(file_bytes) < len(magic):
+        return False
+    
+    return file_bytes[:len(magic)] == magic
 
 
 async def _read_upload_file(upload_file: UploadFile) -> bytes:
     """
     Read upload file contents with size validation.
+    
+    Reads in chunks to avoid loading oversized files into memory.
     
     Args:
         upload_file: FastAPI UploadFile object
@@ -111,7 +145,6 @@ async def _read_upload_file(upload_file: UploadFile) -> bytes:
 
 
 @router.post("/parse")
-@limiter.limit(f"{RATE_LIMIT_PER_MINUTE}/minute")
 async def parse_invoice(request: Request, file: UploadFile = File(...)):
     """
     Parse invoice from uploaded PDF or image file.
@@ -152,8 +185,18 @@ async def parse_invoice(request: Request, file: UploadFile = File(...)):
     temp_file_path: Optional[Path] = None
     
     try:
+        # Validate filename exists
+        if not file.filename:
+            return JSONResponse(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                content={
+                    "error": "unsupported_format",
+                    "message": "File must have a valid name with extension"
+                }
+            )
+        
         # Validate file extension
-        if not _validate_file_extension(file.filename or ""):
+        if not _validate_file_extension(file.filename):
             return JSONResponse(
                 status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
                 content={
@@ -162,8 +205,8 @@ async def parse_invoice(request: Request, file: UploadFile = File(...)):
                 }
             )
         
-        # Validate MIME type
-        if not _validate_mime_type(file.filename or "", file.content_type or ""):
+        # Validate MIME type (strict matching)
+        if not _validate_mime_type(file.filename, file.content_type):
             return JSONResponse(
                 status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
                 content={
@@ -175,14 +218,42 @@ async def parse_invoice(request: Request, file: UploadFile = File(...)):
         # Read file contents with size validation
         file_bytes = await _read_upload_file(file)
         
+        # Validate file is not empty
+        if not file_bytes:
+            return JSONResponse(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                content={
+                    "error": "extraction_failed",
+                    "message": "Uploaded file is empty"
+                }
+            )
+        
+        # Validate magic bytes to prevent MIME spoofing
+        file_ext = _get_file_extension(file.filename)
+        if not _validate_magic_bytes(file_bytes, file_ext):
+            return JSONResponse(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                content={
+                    "error": "unsupported_format",
+                    "message": "File content does not match the claimed format"
+                }
+            )
+        
+        # Additional PDF header validation
+        if file_ext == "pdf" and not validate_pdf_header(file_bytes):
+            return JSONResponse(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                content={
+                    "error": "unsupported_format",
+                    "message": "File is not a valid PDF"
+                }
+            )
+        
         logger.info(
             f"Processing file: {file.filename}, "
             f"size: {len(file_bytes)} bytes, "
             f"type: {file.content_type}"
         )
-        
-        # Determine if PDF or image
-        file_ext = _get_file_extension(file.filename or "")
         
         # Convert PDF to image if needed
         if file_ext == "pdf":

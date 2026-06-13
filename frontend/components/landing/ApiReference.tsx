@@ -2,106 +2,78 @@
 
 import { useEffect, useState } from 'react';
 
-const endpoints = [
-  {
-    method: 'POST',
-    path: '/api/parse',
-    title: 'Upload & parse invoice',
-    fields: [
-      { label: 'Request', value: 'multipart/form-data with file field' },
-      { label: 'Response', value: 'InvoiceData JSON object' },
-      { label: 'Header returned', value: 'X-Processing-Time-Ms' },
-      { label: 'Rate limit', value: '10 req/min per IP' },
-    ],
-  },
-  {
-    method: 'POST',
-    path: '/api/export/csv',
-    title: 'Export to CSV',
-    fields: [
-      { label: 'Request', value: 'InvoiceData JSON body' },
-      { label: 'Response', value: 'CSV file download' },
-      { label: 'Filename', value: 'invoice_{invoice_number}.csv' },
-    ],
-  },
-  {
-    method: 'POST',
-    path: '/api/validate-key',
-    title: 'License key check',
-    fields: [
-      { label: 'Request', value: '{ "license_key": "XXXX-XXXX-XXXX-XXXX" }' },
-      { label: 'Response', value: '{ "valid": true, "tier": "agency" }' },
-      { label: 'Validation', value: 'HMAC-based, fully local — no external call, no DB write' },
-    ],
-  },
-];
-
 export default function ApiReference() {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
-          setIsVisible(true);
-        }
+        if (entries[0].isIntersecting) setIsVisible(true);
       },
       { threshold: 0.1 }
     );
-
-    const element = document.getElementById('api-section');
-    if (element) observer.observe(element);
-
+    const el = document.getElementById('api-section');
+    if (el) observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
   return (
-    <section id="api-section" className="py-20 border-b border-zinc-200/10">
-      <div className="max-w-5xl mx-auto px-8 md:px-16 lg:px-20">
-        <span className="font-mono text-[10px] tracking-[0.18em] uppercase text-amber-600 block mb-3.5">
-          API Reference
-        </span>
-        <h2 className="font-serif text-[clamp(28px,4vw,40px)] font-bold leading-[1.15] tracking-tight text-zinc-900 mb-4.5">
-          Three endpoints. That's it.
-        </h2>
+    <section id="api-section" className="px-6 md:px-8 py-16 border-b border-[var(--grid-color)]">
+      <div className="max-w-[1200px] mx-auto">
+        <div className="mb-10">
+          <h2 className="text-3xl font-semibold mb-2">Developer API</h2>
+          <p className="text-[var(--text-secondary)] text-lg max-w-[600px]">
+            Use the /api/parse endpoint to integrate InvoiceGhost directly into your own ERP, Tally workflow, or custom internal tools.
+          </p>
+        </div>
 
-        <div className={`mt-8 space-y-7 transition-all duration-600 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
-          {endpoints.map((endpoint, index) => (
-            <div key={index} className="mb-7">
-              <h3 className="text-base font-semibold text-zinc-900 mb-2.5 pb-2 border-b border-zinc-200/10">
-                <span className="font-mono text-sm font-bold text-amber-600 mr-2">
-                  {endpoint.method}
-                </span>
-                {endpoint.path} — {endpoint.title}
-              </h3>
-              <table className="w-full border-collapse text-sm">
-                <thead>
-                  <tr>
-                    <th className="font-mono text-[9.5px] tracking-[0.12em] uppercase text-zinc-600 py-2.5 px-3.5 text-left border-b-2 border-zinc-200/10">
-                      Field
-                    </th>
-                    <th className="font-mono text-[9.5px] tracking-[0.12em] uppercase text-zinc-600 py-2.5 px-3.5 text-left border-b-2 border-zinc-200/10">
-                      Value
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {endpoint.fields.map((field, fieldIndex) => (
-                    <tr key={fieldIndex} className="hover:bg-amber-500/3">
-                      <td className="py-3 px-3.5 border-b border-zinc-200/10 text-zinc-700 align-top">
-                        {field.label}
-                      </td>
-                      <td className="py-3 px-3.5 border-b border-zinc-200/10 text-zinc-700 align-top">
-                        <code className="font-mono text-[11.5px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded border border-amber-500/15">
-                          {field.value}
-                        </code>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        <div className={`crosshair-panel grid grid-cols-1 md:grid-cols-2 transition-all duration-600 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+          {/* Left: API Info */}
+          <div className="p-8 md:p-10 border-b md:border-b-0 md:border-r border-[var(--border-main)] bg-[var(--bg-panel)]">
+            <h3 className="text-2xl font-semibold mb-2">POST /api/parse</h3>
+            <p className="text-[var(--text-secondary)] leading-relaxed mb-6">
+              Uploads the invoice as multipart/form-data. Triggers strict MIME type and magic bytes validation before converting to a 300DPI image array for the extraction model.
+            </p>
+            
+            <ul className="space-y-0">
+              {[
+                { label: 'Rate Limit', value: '10 req / min' },
+                { label: 'Max Payload', value: '10 MB' },
+                { label: 'Allowed Formats', value: 'PDF, PNG, JPG, WEBP' },
+                { label: 'Response Header', value: 'X-Processing-Time-Ms' },
+              ].map((item, i) => (
+                <li key={i} className="flex justify-between py-3 border-b border-[var(--border-main)] last:border-b-0 mono text-xs">
+                  <span className="text-[var(--text-secondary)]">{item.label}</span>
+                  <span className="text-[var(--accent-cyan)]">{item.value}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          
+          {/* Right: Code Block */}
+          <div className="p-8 md:p-10 bg-[#000] overflow-x-auto">
+            <div className="mono text-xs leading-[1.8] text-[var(--text-secondary)]">
+              <span className="text-[#666]">// Strict Pydantic v2 JSON Response</span><br /><br />
+              {'{'}<br />
+              &nbsp;&nbsp;<span className="text-white">"invoice_number"</span>: <span className="text-[var(--accent-green)]">"INV-2023-042"</span>,<br />
+              &nbsp;&nbsp;<span className="text-white">"invoice_date"</span>: <span className="text-[var(--accent-green)]">"2023-10-15"</span>,<br />
+              &nbsp;&nbsp;<span className="text-white">"vendor_name"</span>: <span className="text-[var(--accent-green)]">"TechCorp India Pvt Ltd"</span>,<br />
+              &nbsp;&nbsp;<span className="text-white">"vendor_gstin"</span>: <span className="text-[var(--accent-green)]">"27AADCB2230M1Z2"</span>,<br />
+              &nbsp;&nbsp;<span className="text-white">"line_items"</span>: [<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;{'{'}<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="text-white">"description"</span>: <span className="text-[var(--accent-green)]">"Software Consulting"</span>,<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="text-white">"hsn_sac"</span>: <span className="text-[var(--accent-green)]">"998311"</span>,<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="text-white">"amount"</span>: <span className="text-[var(--accent-amber)]">50000.00</span>,<br />
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="text-white">"tax_rate"</span>: <span className="text-[var(--accent-amber)]">18.0</span><br />
+              &nbsp;&nbsp;&nbsp;&nbsp;{'}'}<br />
+              &nbsp;&nbsp;],<br />
+              &nbsp;&nbsp;<span className="text-white">"cgst"</span>: <span className="text-[var(--accent-amber)]">4500.00</span>,<br />
+              &nbsp;&nbsp;<span className="text-white">"sgst"</span>: <span className="text-[var(--accent-amber)]">4500.00</span>,<br />
+              &nbsp;&nbsp;<span className="text-white">"grand_total"</span>: <span className="text-[var(--accent-amber)]">59000.00</span>,<br />
+              &nbsp;&nbsp;<span className="text-white">"confidence_score"</span>: <span className="text-[var(--accent-amber)]">0.98</span><br />
+              {'}'}
             </div>
-          ))}
+          </div>
         </div>
       </div>
     </section>

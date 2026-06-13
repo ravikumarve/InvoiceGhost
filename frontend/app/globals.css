@@ -1,26 +1,53 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════════════════
+   InvoiceGhost Design System — Technical Blueprint
+   Based on Landing 2: AI Invoice Extraction
+   ═══════════════════════════════════════════════════════════ */
+
 :root {
-  --background: #09090b;
-  --foreground: #fafafa;
-  --card: #18181b;
-  --card-foreground: #fafafa;
-  --popover: #18181b;
-  --popover-foreground: #fafafa;
-  --primary: #f59e0b;
-  --primary-foreground: #fafafa;
-  --secondary: #27272a;
-  --secondary-foreground: #fafafa;
-  --muted: #27272a;
-  --muted-foreground: #a1a1aa;
-  --accent: #27272a;
-  --accent-foreground: #fafafa;
-  --destructive: #7f1d1d;
-  --destructive-foreground: #fafafa;
-  --border: #27272a;
-  --input: #27272a;
-  --ring: #f59e0b;
-  --radius: 0.5rem;
+  /* Core Palette */
+  --bg-base: #030303;
+  --bg-panel: #0a0a0a;
+  --bg-elevated: #111111;
+
+  /* Grid & Borders */
+  --grid-color: rgba(255, 255, 255, 0.06);
+  --border-main: rgba(255, 255, 255, 0.15);
+  --border-highlight: rgba(255, 255, 255, 0.4);
+
+  /* Accent System */
+  --accent-cyan: #00f0ff;
+  --accent-green: #00ff66;
+  --accent-alert: #ff3366;
+  --accent-amber: #f59e0b;
+
+  /* Typography */
+  --text-primary: #ffffff;
+  --text-secondary: #888888;
+  --text-tertiary: #555555;
+
+  /* Semantic Aliases (for shadcn compatibility) */
+  --background: var(--bg-base);
+  --foreground: var(--text-primary);
+  --card: var(--bg-panel);
+  --card-foreground: var(--text-primary);
+  --popover: var(--bg-panel);
+  --popover-foreground: var(--text-primary);
+  --primary: var(--accent-cyan);
+  --primary-foreground: #000000;
+  --secondary: #1a1a1a;
+  --secondary-foreground: var(--text-primary);
+  --muted: #1a1a1a;
+  --muted-foreground: var(--text-secondary);
+  --accent: #1a1a1a;
+  --accent-foreground: var(--text-primary);
+  --destructive: var(--accent-alert);
+  --destructive-foreground: var(--text-primary);
+  --border: var(--border-main);
+  --input: var(--border-main);
+  --ring: var(--accent-cyan);
+  --radius: 0px;
 }
 
 @theme inline {
@@ -43,28 +70,157 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-cyan: var(--accent-cyan);
+  --color-green: var(--accent-green);
+  --color-alert: var(--accent-alert);
+  --color-amber: var(--accent-amber);
+  --color-bg-base: var(--bg-base);
+  --color-bg-panel: var(--bg-panel);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
 }
 
 * {
-  border-color: var(--border);
+  border-color: var(--border-main);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-inter), 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Global Aesthetic Grid */
+  background-image:
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: center top;
 }
 
-/* Landing Page Styles */
+/* ── Crosshair Panel ── */
+.crosshair-panel {
+  position: relative;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-main);
+  backdrop-filter: blur(10px);
+}
+
+.crosshair-panel::before,
+.crosshair-panel::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  pointer-events: none;
+}
+
+.crosshair-panel::before {
+  top: -4px;
+  left: -4px;
+  border-top: 1px solid var(--accent-cyan);
+  border-left: 1px solid var(--accent-cyan);
+}
+
+.crosshair-panel::after {
+  bottom: -4px;
+  right: -4px;
+  border-bottom: 1px solid var(--accent-cyan);
+  border-right: 1px solid var(--accent-cyan);
+}
+
+/* ── Meta Bar ── */
+.meta-bar {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border-main);
+  font-family: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: #050505;
+}
+
+/* ── Mono Utility ── */
+.mono {
+  font-family: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
+}
+
+/* ── Technical Button Base ── */
+.btn-tech {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  font-family: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-decoration: none;
+  transition: all 0.2s;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.btn-primary-tech {
+  background: var(--text-primary);
+  color: var(--bg-base);
+  border: 1px solid var(--text-primary);
+}
+
+.btn-primary-tech:hover {
+  background: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+  color: #000;
+}
+
+.btn-outline-tech {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-main);
+}
+
+.btn-outline-tech:hover {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-base);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-main);
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-cyan);
+}
+
+/* ── Selection ── */
+::selection {
+  background: rgba(0, 240, 255, 0.2);
+  color: var(--text-primary);
+}
+
+/* ── Smooth Scroll ── */
 html {
   scroll-behavior: smooth;
 }
 
-/* Marquee Animation */
+/* ── Marquee Animation (for landing) ── */
 @keyframes marquee {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
@@ -74,46 +230,22 @@ html {
   animation: marquee 28s linear infinite;
 }
 
-/* Custom font classes for landing page */
-.font-serif {
-  font-family: 'Playfair Display', Georgia, serif;
+/* ── Processing Pulse ── */
+@keyframes cyan-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 240, 255, 0); }
+  50% { box-shadow: 0 0 20px 2px rgba(0, 240, 255, 0.15); }
 }
 
-/* Stroke utility for text outline */
-.stroke-amber-500\/8 {
-  -webkit-text-stroke: 1px rgba(212, 132, 10, 0.08);
+.animate-cyan-pulse {
+  animation: cyan-pulse 2s ease-in-out infinite;
 }
 
-.stroke-amber-500\/7 {
-  -webkit-text-stroke: 1px rgba(212, 132, 10, 0.07);
+/* ── Scan Line ── */
+@keyframes scan-line {
+  0% { top: 0%; }
+  100% { top: 100%; }
 }
 
-/* Duration utilities */
-.duration-180 {
-  transition-duration: 180ms;
-}
-
-.duration-600 {
-  transition-duration: 600ms;
-}
-
-.duration-700 {
-  transition-duration: 700ms;
-}
-
-/* Delay utilities */
-.delay-75 {
-  transition-delay: 75ms;
-}
-
-.delay-150 {
-  transition-delay: 150ms;
-}
-
-.delay-200 {
-  transition-delay: 200ms;
-}
-
-.delay-300 {
-  transition-delay: 300ms;
+.animate-scan-line {
+  animation: scan-line 2s linear infinite;
 }

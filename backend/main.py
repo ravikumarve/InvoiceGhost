@@ -1,14 +1,26 @@
+"""InvoiceGhost API — Privacy-first invoice & receipt parser.
+
+Main application entry point with:
+- Rate limiting (bypassed in test mode)
+- Security headers middleware
+- CORS (restricted to frontend origin)
+- Processing time header
+- Global exception handler
+- Request size limit
+"""
+
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from slowapi import Limiter
+from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from contextlib import asynccontextmanager
 import logging
 import os
-from dotenv import load_dotenv
 import time
+from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
@@ -23,8 +35,16 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Rate limiter setup
-limiter = Limiter(key_func=get_remote_address)
+# Test mode detection
+TESTING = os.getenv("TESTING", "").strip() == "1"
+
+# Rate limiter setup — single instance shared across the app
+limiter = Limiter(
+    key_func=get_remote_address,
+    # In test mode, set an extremely high limit so tests never hit it
+    default_limits=["1000/minute"] if TESTING else ["10/minute"],
+    enabled=not TESTING,  # Disable entirely in test mode
+)
 
 # Custom rate limit exceeded handler
 async def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
@@ -43,6 +63,8 @@ async def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExc
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting InvoiceGhost API...")
+    if TESTING:
+        logger.info("⚠️  TEST MODE: Rate limiting disabled")
     yield
     logger.info("Shutting down InvoiceGhost API...")
 
@@ -51,21 +73,30 @@ app = FastAPI(
     title="InvoiceGhost API",
     description="Privacy-first invoice & receipt parser SaaS",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    # Limit request body size at the framework level (11MB to allow 10MB files + overhead)
+    max_request_size=11 * 1024 * 1024,
 )
 
-# Rate limiter exception handler
+# Rate limiter — attach to app state and add middleware
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, custom_rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
-# CORS middleware configuration
-frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+# CORS middleware configuration — restrict to known frontend origins
+_allowed_origins = os.getenv("FRONTEND_URL", "http://localhost:3000")
+# Support multiple origins in production (comma-separated)
+CORS_ORIGINS = [origin.strip() for origin in _allowed_origins.split(",") if origin.strip()]
+# In development, also allow common local ports
+if not TESTING and os.getenv("ENVIRONMENT") != "production":
+    CORS_ORIGINS.extend(["http://localhost:3001", "http://127.0.0.1:3000"])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[frontend_url],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["POST", "GET"],  # Only methods we actually use
+    allow_headers=["Content-Type", "Authorization", "X-License-Key"],
 )
 
 # Security headers middleware
@@ -76,10 +107,11 @@ async def security_headers_middleware(request: Request, call_next):
     # Security headers
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
-    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["X-XSS-Protection"] = "0"  # Modern best practice: let CSP handle it
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
-    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none';"
+    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none';"
+    response.headers["X-Request-ID"] = os.urandom(8).hex()  # Unique per request
     
     # HSTS header (only in production with HTTPS)
     if os.getenv("ENVIRONMENT") == "production":
@@ -96,7 +128,7 @@ async def add_processing_time_header(request: Request, call_next):
     response.headers["X-Processing-Time-Ms"] = str(f"{process_time:.2f}")
     return response
 
-# Global exception handler
+# Global exception handler — never leak internal details
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled exception: {exc}", exc_info=True)

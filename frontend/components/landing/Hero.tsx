@@ -11,92 +11,73 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className="relative min-h-screen flex flex-col justify-center px-8 py-20 md:px-16 lg:px-20 overflow-hidden border-b border-zinc-200/10">
-      {/* Amber orb glow */}
-      <div className="absolute w-[500px] h-[500px] rounded-full bg-gradient-to-br from-amber-500/12 to-transparent -top-[100px] right-[100px] pointer-events-none" />
-
-      {/* Decorative large ghost letter */}
-      <div className="absolute -right-10 top-1/2 -translate-y-1/2 font-serif text-[480px] font-black text-transparent stroke-amber-500/8 pointer-events-none select-none tracking-tighter hidden lg:block" style={{ WebkitTextStroke: '1px rgba(212,132,10,0.08)' }}>
-        IG
-      </div>
-
-      <div className="relative z-10 max-w-5xl mx-auto w-full">
-        {/* Eyebrow */}
-        <div className={`inline-flex items-center gap-2 font-mono text-xs tracking-[0.14em] uppercase text-amber-600 mb-7 transition-all duration-600 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-[18px]'}`}>
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-          Privacy-first invoice parser · GST-ready · Zero data retention
-        </div>
-
-        {/* Logo and title */}
-        <div className={`flex items-center gap-6 mb-8 transition-all duration-700 delay-75 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-[18px]'}`}>
-          {/* SVG Logo Mark */}
-          <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
-            {/* Ghost body */}
-            <path d="M16 28 C16 17.5 23.2 10 32 10 C40.8 10 48 17.5 48 28 L48 54 L41 48 L35 54 L32 50 L29 54 L23 48 L16 54 Z" fill="#1a1612" stroke="rgba(212,132,10,0.6)" strokeWidth="1.5"/>
-            {/* Eyes */}
-            <circle cx="25" cy="30" r="3.5" fill="#d4840a"/>
-            <circle cx="39" cy="30" r="3.5" fill="#d4840a"/>
-            {/* Shine dots */}
-            <circle cx="26.5" cy="28.5" r="1" fill="rgba(255,255,255,0.6)"/>
-            <circle cx="40.5" cy="28.5" r="1" fill="rgba(255,255,255,0.6)"/>
-            {/* Invoice lines on body */}
-            <line x1="24" y1="38" x2="40" y2="38" stroke="rgba(212,132,10,0.3)" strokeWidth="1.5" strokeLinecap="round"/>
-            <line x1="24" y1="42" x2="36" y2="42" stroke="rgba(212,132,10,0.2)" strokeWidth="1.5" strokeLinecap="round"/>
-            {/* Outer ring */}
-            <circle cx="32" cy="32" r="30" stroke="rgba(212,132,10,0.12)" strokeWidth="1" strokeDasharray="3 4"/>
-          </svg>
-
-          <h1 className="font-serif text-[clamp(56px,9vw,96px)] font-black leading-[0.95] tracking-tight text-zinc-900">
-            Invoice<em className="italic text-amber-600">Ghost</em>
+    <section className="px-6 md:px-8 py-16 md:py-24 border-b border-[var(--grid-color)]">
+      <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        {/* Left: Hero Text */}
+        <div className={`transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+          <div className="inline-block px-3 py-1 border border-[var(--border-main)] text-[var(--text-secondary)] mono text-xs uppercase mb-6 bg-[var(--bg-panel)]">
+            Gemini 2.0 Flash Core
+          </div>
+          <h1 className="text-[clamp(2.5rem,5vw,4.5rem)] font-semibold leading-[1.05] tracking-tight mb-6">
+            Drop an invoice.<br />Get clean data.
           </h1>
+          <p className="text-lg text-[var(--text-secondary)] leading-relaxed mb-8 max-w-[500px]">
+            No accounts. No storage. No drama. Instantly extract GST numbers, HSN/SAC codes, and tax splits into structured JSON and CSV formats. Built for Indian freelancers drowning in paperwork.
+          </p>
+          <div className="flex gap-3 flex-wrap">
+            <a href="/workspace" className="btn-tech btn-primary-tech">
+              Open Workspace
+            </a>
+            <a
+              href="https://github.com/ravikumarve/InvoiceGhost"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-tech btn-outline-tech inline-flex items-center gap-2"
+            >
+              <Github className="w-4 h-4" />
+              View GitHub
+            </a>
+          </div>
+
+          {/* Badges */}
+          <div className="flex gap-2.5 flex-wrap mt-10">
+            <span className="mono text-[10.5px] px-3 py-1.5 border border-[var(--border-main)] text-[var(--text-secondary)] bg-[var(--bg-panel)]">
+              56/56 tests passing
+            </span>
+            <span className="mono text-[10.5px] px-3 py-1.5 border border-[var(--accent-cyan)]/25 text-[var(--accent-cyan)] bg-[rgba(0,240,255,0.05)]">
+              MIT License
+            </span>
+            <span className="mono text-[10.5px] px-3 py-1.5 border border-[var(--border-main)] text-[var(--text-secondary)] bg-[var(--bg-panel)]">
+              Python 3.12+
+            </span>
+            <span className="mono text-[10.5px] px-3 py-1.5 border border-[var(--border-main)] text-[var(--text-secondary)] bg-[var(--bg-panel)]">
+              FastAPI · Gemini Flash
+            </span>
+            <span className="mono text-[10.5px] px-3 py-1.5 border border-[var(--border-main)] text-[var(--text-secondary)] bg-[var(--bg-panel)]">
+              GST-ready
+            </span>
+            <span className="mono text-[10.5px] px-3 py-1.5 border border-[var(--border-main)] text-[var(--text-secondary)] bg-[var(--bg-panel)]">
+              Zero data retention
+            </span>
+          </div>
         </div>
 
-        {/* Tagline */}
-        <p className={`text-lg md:text-xl text-zinc-700 max-w-lg leading-relaxed mt-5 mb-10 transition-all duration-700 delay-150 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-[18px]'}`}>
-          Drop an invoice. Get clean data.<br className="hidden md:block" />No accounts, no storage, no drama.
-        </p>
-
-        {/* CTA buttons */}
-        <div className={`flex gap-3 items-center flex-wrap transition-all duration-700 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-[18px]'}`}>
-          <a
-            href="https://github.com/ravikumarve/InvoiceGhost"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-zinc-900 text-amber-50 rounded-lg text-sm font-semibold tracking-wide hover:bg-amber-600 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-amber-500/25 transition-all duration-180"
-          >
-            <Github className="w-4 h-4" />
-            View on GitHub
-          </a>
-          <a
-            href="https://gumroad.com/l/invoiceghost"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-transparent text-zinc-700 border border-zinc-200/10 rounded-lg text-sm font-semibold tracking-wide hover:border-amber-500 hover:text-amber-600 hover:-translate-y-0.5 transition-all duration-180"
-          >
-            Get Batch Mode — $19
-          </a>
-        </div>
-
-        {/* Badges */}
-        <div className={`flex gap-2.5 flex-wrap mt-12 transition-all duration-700 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-[18px]'}`}>
-          <span className="font-mono text-[10.5px] px-3 py-1.5 rounded border border-zinc-200/10 text-zinc-600 bg-white/70 backdrop-blur-sm">
-            18/18 tests passing
-          </span>
-          <span className="font-mono text-[10.5px] px-3 py-1.5 rounded border border-amber-500/25 text-amber-600 bg-amber-50">
-            MIT License
-          </span>
-          <span className="font-mono text-[10.5px] px-3 py-1.5 rounded border border-zinc-200/10 text-zinc-600 bg-white/70 backdrop-blur-sm">
-            Python 3.12+
-          </span>
-          <span className="font-mono text-[10.5px] px-3 py-1.5 rounded border border-zinc-200/10 text-zinc-600 bg-white/70 backdrop-blur-sm">
-            FastAPI · Gemini Flash
-          </span>
-          <span className="font-mono text-[10.5px] px-3 py-1.5 rounded border border-zinc-200/10 text-zinc-600 bg-white/70 backdrop-blur-sm">
-            GST-ready
-          </span>
-          <span className="font-mono text-[10.5px] px-3 py-1.5 rounded border border-zinc-200/10 text-zinc-600 bg-white/70 backdrop-blur-sm">
-            Zero data retention
-          </span>
+        {/* Right: Technical Dropzone Preview */}
+        <div className={`crosshair-panel transition-all duration-700 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+          <div className="meta-bar">
+            <span>STATUS: READY</span>
+            <span>MEM_ALLOC: 0MB</span>
+          </div>
+          <div className="border border-dashed border-[var(--border-highlight)] bg-[rgba(10,10,10,0.8)] p-16 text-center">
+            <div className="w-12 h-12 border border-[var(--border-main)] flex items-center justify-center mx-auto mb-4 text-[var(--accent-cyan)]">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            </div>
+            <p className="text-lg font-medium mb-1">Initialize Extraction</p>
+            <p className="mono text-xs text-[var(--text-tertiary)] uppercase">Drag & Drop PDF, PNG, JPG (Max 10MB)</p>
+          </div>
+          <div className="meta-bar">
+            <span className="text-[var(--accent-green)]">[PROTECTED] Files deleted post-processing</span>
+          </div>
         </div>
       </div>
     </section>
