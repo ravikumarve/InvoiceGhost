@@ -133,7 +133,7 @@ Confidence score interpretation:
 
 ```bash
 # Clone
-git clone https://github.com/yourusername/invoiceghost.git
+git clone https://github.com/ravikumarve/invoiceghost.git
 cd invoiceghost
 
 # Backend
@@ -285,23 +285,39 @@ invoiceghost/
 │   │   ├── test_export.py       # 17 export endpoint tests
 │   │   ├── test_rate_limiting.py # 19 security/header/error tests
 │   │   └── fixtures/            # Sample invoices (PDF + image)
-│   ├── Dockerfile
-│   ├── render.yaml
+│   ├── Dockerfile               # Docker build with poppler-utils for PDF conversion
+│   ├── render.yaml              # Render deployment config (Docker env)
 │   ├── pytest.ini
 │   └── requirements.txt
 ├── frontend/
 │   ├── app/
-│   │   ├── page.tsx             # Upload UI
-│   │   ├── result/page.tsx      # Result display + export
-│   │   └── layout.tsx           # Root layout
+│   │   ├── page.tsx             # Landing page (marketing homepage)
+│   │   ├── workspace/page.tsx   # Upload + parse tool
+│   │   ├── result/page.tsx      # Parsed invoice display + export
+│   │   ├── pricing/page.tsx     # Pricing + FAQ
+│   │   ├── docs/page.tsx        # API documentation
+│   │   ├── privacy/page.tsx     # Privacy policy
+│   │   ├── batch/page.tsx       # License-gated multi-file extraction
+│   │   ├── changelog/page.tsx   # Version history
+│   │   ├── not-found.tsx        # Technical 404
+│   │   ├── global-error.tsx     # Global error boundary
+│   │   └── layout.tsx           # Root layout (fonts, metadata)
 │   ├── components/
-│   │   ├── UploadZone.tsx       # Drag-drop upload
-│   │   ├── InvoiceCard.tsx      # Structured result display
+│   │   ├── Navigation.tsx       # 8-page nav + mobile hamburger
+│   │   ├── UploadZone.tsx       # Drag-drop upload with validation
+│   │   ├── InvoiceCard.tsx      # Structured result display (HUD style)
 │   │   ├── ExportBar.tsx        # CSV / Copy JSON / Batch CTA
-│   │   └── GumroadBadge.tsx     # Persistent upgrade badge
-│   └── lib/
-│       └── api.ts               # Backend API client
-├── AGENTS.md
+│   │   ├── GumroadBadge.tsx     # Persistent upgrade badge
+│   │   └── landing/             # Hero, Marquee, Features, Security, etc.
+│   ├── lib/
+│   │   └── api.ts               # Backend API client (relative URLs)
+│   ├── public/
+│   │   ├── favicon.svg          # Custom SVG favicon
+│   │   ├── robots.txt           # SEO crawl rules
+│   │   └── sitemap.xml          # All 7 public routes
+│   ├── vercel.json              # Security headers + env config
+│   └── next.config.js           # API proxy rewrites
+├── LICENSE
 └── README.md
 ```
 
@@ -354,9 +370,9 @@ InvoiceGhost is built with a security-first mindset for a tool that handles fina
 
 1. Connect your GitHub repo to Render
 2. Set root directory to `backend/`
-3. Set environment variables in Render dashboard
-4. Build command: `pip install -r requirements.txt`
-5. Start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+3. Render detects `render.yaml` — uses Docker build (includes `poppler-utils` for PDF conversion)
+4. Set environment variables in Render dashboard (see Configuration section above)
+5. Health check path: `/health`
 
 ### Frontend → Vercel
 
@@ -399,6 +415,6 @@ MIT — see [LICENSE](./LICENSE) for details.
 
 **Built for Indian freelancers drowning in GST paperwork.**
 
-[Get Batch Mode](https://gumroad.com/l/invoiceghost) · [Report Issues](https://github.com/yourusername/invoiceghost/issues) · [Interactive API Docs](https://invoiceghost.onrender.com/docs)
+[Get Batch Mode](https://gumroad.com/l/invoiceghost) · [Report Issues](https://github.com/ravikumarve/invoiceghost/issues) · [Interactive API Docs](https://invoiceghost.onrender.com/docs)
 
 </div>
