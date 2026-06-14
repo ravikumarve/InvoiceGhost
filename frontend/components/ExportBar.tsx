@@ -41,8 +41,7 @@ export default function ExportBar({ invoiceData }: ExportBarProps) {
   };
 
   const handleUnlockBatchMode = () => {
-    const gumroadUrl = process.env.NEXT_PUBLIC_GUMROAD_URL || 'https://gumroad.com/l/invoiceghost';
-    window.open(gumroadUrl, '_blank');
+    window.location.href = '/batch';
   };
 
   return (

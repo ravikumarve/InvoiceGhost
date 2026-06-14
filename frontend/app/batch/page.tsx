@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/landing/Footer';
-import { parseInvoice, validateLicenseKey, exportToCSV } from '@/lib/api';
+import { parseInvoice, validateLicenseKey } from '@/lib/api';
 import { InvoiceData } from '@/lib/types';
 import {
   Lock, Unlock, Upload, FileText, Loader2, CheckCircle,
@@ -120,27 +120,80 @@ export default function BatchPage() {
     setIsProcessing(false);
   };
 
-  const handleExportMasterCSV = async () => {
+  const handleExportMasterCSV = () => {
     const successful = results.filter((r) => r.status === 'success' && r.data);
     if (successful.length === 0) return;
 
-    // Combine all invoice data into one CSV
-    const allResults = successful.map((r) => r.data!);
-    // Use the first invoice's data structure for the master CSV
-    // In a real implementation, this would merge all invoices into a combined format
-    for (const data of allResults) {
-      try {
-        const blob = await exportToCSV(data);
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `batch_${data.invoice_number || 'export'}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-      } catch (err) {
-        // Continue with next
+    const allData = successful.map((r) => r.data!);
+
+    // Build a combined CSV with all line items from all invoices
+    const headers = [
+      'Invoice Number', 'Invoice Date', 'Vendor', 'Vendor GSTIN',
+      'Buyer', 'Buyer GSTIN', 'Description', 'HSN/SAC',
+      'Quantity', 'Unit', 'Rate', 'Amount', 'Tax Rate',
+      'Subtotal', 'CGST', 'SGST', 'IGST', 'Total Tax', 'Grand Total',
+      'Confidence'
+    ];
+
+    const rows: string[][] = [];
+
+    for (const inv of allData) {
+      const baseFields = [
+        inv.invoice_number || '',
+        inv.invoice_date || '',
+        inv.vendor_name || '',
+        inv.vendor_gstin || '',
+        inv.buyer_name || '',
+        inv.buyer_gstin || '',
+      ];
+
+      for (const item of inv.line_items) {
+        rows.push([
+          ...baseFields,
+          item.description || '',
+          item.hsn_sac || '',
+          item.quantity?.toString() || '',
+          item.unit || '',
+          item.rate?.toString() || '',
+          item.amount?.toString() || '',
+          item.tax_rate?.toString() || '',
+          inv.subtotal?.toString() || '',
+          inv.cgst?.toString() || '',
+          inv.sgst?.toString() || '',
+          inv.igst?.toString() || '',
+          inv.total_tax?.toString() || '',
+          inv.grand_total?.toString() || '',
+          inv.confidence_score?.toFixed(2) || '',
+        ]);
       }
     }
+
+    // Escape CSV fields (handle commas, quotes, newlines)
+    const escape = (val: string) => {
+      if (val.includes(',') || val.includes('"') || val.includes('\n')) {
+        return `"${val.replace(/"/g, '""')}"`;
+      }
+      // CSV injection protection — prefix dangerous chars with single quote
+      if (/^[=+\-@]/.test(val)) {
+        return `'${val}`;
+      }
+      return val;
+    };
+
+    const csvContent = [
+      headers.map(escape).join(','),
+      ...rows.map((row) => row.map(escape).join(',')),
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `batch_export_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const successCount = results.filter((r) => r.status === 'success').length;

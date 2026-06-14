@@ -1,16 +1,45 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { Upload, FileText, X } from 'lucide-react';
+import { Upload, FileText, X, AlertCircle } from 'lucide-react';
 
 interface UploadZoneProps {
   onFileSelect: (file: File) => void;
   isProcessing?: boolean;
 }
 
+const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+const VALID_TYPES = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
+const VALID_EXTENSIONS = ['.pdf', '.png', '.jpg', '.jpeg', '.webp'];
+
+function sanitizeFilename(name: string): string {
+  // Strip HTML-unsafe characters from filename to prevent XSS in render
+  return name
+    .replace(/[<>"'&]/g, '')  // Remove HTML-special chars
+    .replace(/\s+/g, ' ')      // Collapse whitespace
+    .trim();
+}
+
 export default function UploadZone({ onFileSelect, isProcessing = false }: UploadZoneProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  const validateFile = (file: File): string | null => {
+    const extension = '.' + file.name.split('.').pop()?.toLowerCase();
+
+    if (!VALID_TYPES.includes(file.type) && !VALID_EXTENSIONS.includes(extension)) {
+      return 'Unsupported format. Only PDF, PNG, JPG, WEBP accepted.';
+    }
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      return `File too large. Max size is ${MAX_FILE_SIZE_MB}MB. Yours is ${(file.size / 1024 / 1024).toFixed(1)}MB.`;
+    }
+    if (file.size === 0) {
+      return 'File is empty. Please upload a valid invoice.';
+    }
+    return null;
+  };
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -25,39 +54,42 @@ export default function UploadZone({ onFileSelect, isProcessing = false }: Uploa
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
+    setValidationError(null);
 
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
       const file = files[0];
-      if (isValidFile(file)) {
-        setSelectedFile(file);
-        onFileSelect(file);
+      const error = validateFile(file);
+      if (error) {
+        setValidationError(error);
+        return;
       }
+      setSelectedFile(file);
+      onFileSelect(file);
     }
   }, [onFileSelect]);
 
   const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
+    setValidationError(null);
     if (files && files.length > 0) {
       const file = files[0];
-      if (isValidFile(file)) {
-        setSelectedFile(file);
-        onFileSelect(file);
+      const error = validateFile(file);
+      if (error) {
+        setValidationError(error);
+        return;
       }
+      setSelectedFile(file);
+      onFileSelect(file);
     }
   }, [onFileSelect]);
 
   const handleRemoveFile = useCallback(() => {
     setSelectedFile(null);
+    setValidationError(null);
   }, []);
 
-  const isValidFile = (file: File): boolean => {
-    const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
-    const validExtensions = ['.pdf', '.png', '.jpg', '.jpeg', '.webp'];
-    const extension = '.' + file.name.split('.').pop()?.toLowerCase();
-    
-    return validTypes.includes(file.type) || validExtensions.includes(extension);
-  };
+  const safeName = selectedFile ? sanitizeFilename(selectedFile.name) : '';
 
   return (
     <div className="w-full">
@@ -67,9 +99,9 @@ export default function UploadZone({ onFileSelect, isProcessing = false }: Uploa
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           className={`
-            border border-dashed p-16 text-center transition-all duration-300 cursor-pointer
-            ${isDragging 
-              ? 'border-[var(--accent-cyan)] bg-[rgba(0,240,255,0.02)]' 
+            relative border border-dashed p-16 text-center transition-all duration-300 cursor-pointer
+            ${isDragging
+              ? 'border-[var(--accent-cyan)] bg-[rgba(0,240,255,0.02)]'
               : 'border-[var(--border-highlight)] bg-[rgba(10,10,10,0.8)] hover:border-[var(--accent-cyan)] hover:bg-[rgba(0,240,255,0.02)]'
             }
             ${isProcessing ? 'opacity-50 pointer-events-none' : ''}
@@ -77,13 +109,12 @@ export default function UploadZone({ onFileSelect, isProcessing = false }: Uploa
         >
           <input
             type="file"
-            id="file-upload"
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             onChange={handleFileInput}
             accept=".pdf,.png,.jpg,.jpeg,.webp"
             disabled={isProcessing}
           />
-          
+
           <div className="flex flex-col items-center justify-center gap-4">
             {/* Technical Upload Icon */}
             <div className={`w-12 h-12 border border-[var(--border-main)] flex items-center justify-center transition-colors ${
@@ -91,13 +122,13 @@ export default function UploadZone({ onFileSelect, isProcessing = false }: Uploa
             }`}>
               <Upload className="w-6 h-6" />
             </div>
-            
+
             <div>
               <p className="text-lg font-medium mb-1">
                 {isDragging ? 'Drop your invoice here' : 'Initialize Extraction'}
               </p>
               <p className="mono text-xs text-[var(--text-tertiary)] uppercase">
-                Drag & Drop PDF, PNG, JPG (Max 10MB)
+                Drag & Drop PDF, PNG, JPG (Max {MAX_FILE_SIZE_MB}MB)
               </p>
             </div>
           </div>
@@ -111,14 +142,14 @@ export default function UploadZone({ onFileSelect, isProcessing = false }: Uploa
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">
-                  {selectedFile.name}
+                  {safeName}
                 </p>
                 <p className="mono text-xs text-[var(--text-tertiary)]">
                   {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                 </p>
               </div>
             </div>
-            
+
             {!isProcessing && (
               <button
                 onClick={handleRemoveFile}
@@ -128,6 +159,14 @@ export default function UploadZone({ onFileSelect, isProcessing = false }: Uploa
               </button>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Validation Error */}
+      {validationError && (
+        <div className="mt-3 flex items-center gap-2 px-3 py-2 border border-[var(--accent-alert)] bg-[rgba(255,51,102,0.05)]">
+          <AlertCircle className="w-4 h-4 text-[var(--accent-alert)] flex-shrink-0" />
+          <span className="mono text-xs text-[var(--accent-alert)]">{validationError}</span>
         </div>
       )}
     </div>
