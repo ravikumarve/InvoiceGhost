@@ -13,20 +13,28 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "InvoiceGhost — AI Invoice Extraction",
+  title: {
+    default: "InvoiceGhost — AI Invoice Extraction",
+    template: "%s — InvoiceGhost",
+  },
   description: "Drop an invoice. Get clean data. No accounts. No storage. No drama. Instantly extract GST numbers, HSN/SAC codes, and tax splits into structured JSON and CSV.",
   keywords: ["invoice parser", "GST invoice", "invoice extraction", "PDF parser", "Indian accounting", "invoice OCR", "HSN SAC", "CGST SGST"],
+  icons: {
+    icon: "/favicon.svg",
+  },
   openGraph: {
     title: "InvoiceGhost — AI Invoice Extraction",
     description: "Drop an invoice. Get clean data. No accounts. No storage. No drama.",
     type: "website",
     locale: "en_US",
+    url: "https://invoiceghost.vercel.app",
   },
   twitter: {
     card: "summary_large_image",
     title: "InvoiceGhost — AI Invoice Extraction",
     description: "Drop an invoice. Get clean data. No accounts. No storage. No drama.",
   },
+  metadataBase: new URL("https://invoiceghost.vercel.app"),
 };
 
 export default function RootLayout({
