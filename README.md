@@ -22,36 +22,34 @@
 <div align="center">
   <table>
     <tr>
-      <td><img src="./frontend/public/screenshots/landing.png" alt="Landing page" width="400"/></td>
-      <td><img src="./frontend/public/screenshots/workspace.png" alt="Workspace upload" width="400"/></td>
-    </tr>
-    <tr>
-      <td align="center"><b>Landing</b></td>
-      <td align="center"><b>Extraction Workspace</b></td>
-    </tr>
-    <tr>
+      <td><img src="./frontend/public/screenshots/workspace.png" alt="Extraction Workspace" width="400"/></td>
       <td><img src="./frontend/public/screenshots/result.png" alt="Parse result" width="400"/></td>
-      <td><img src="./frontend/public/screenshots/batch.png" alt="Batch mode" width="400"/></td>
     </tr>
     <tr>
+      <td align="center"><b>Workspace</b></td>
       <td align="center"><b>Parse Result</b></td>
-      <td align="center"><b>Batch Mode</b></td>
     </tr>
     <tr>
+      <td><img src="./frontend/public/screenshots/batch.png" alt="Batch mode" width="400"/></td>
       <td><img src="./frontend/public/screenshots/pricing.png" alt="Pricing" width="400"/></td>
-      <td><img src="./frontend/public/screenshots/docs.png" alt="API docs" width="400"/></td>
     </tr>
     <tr>
+      <td align="center"><b>Batch Mode</b></td>
       <td align="center"><b>Pricing</b></td>
-      <td align="center"><b>API Documentation</b></td>
     </tr>
     <tr>
+      <td><img src="./frontend/public/screenshots/docs.png" alt="API docs" width="400"/></td>
       <td><img src="./frontend/public/screenshots/privacy.png" alt="Privacy" width="400"/></td>
-      <td><img src="./frontend/public/screenshots/changelog.png" alt="Changelog" width="400"/></td>
     </tr>
     <tr>
-      <td align="center"><b>Privacy Policy</b></td>
-      <td align="center"><b>Changelog</b></td>
+      <td align="center"><b>API Docs</b></td>
+      <td align="center"><b>Privacy</b></td>
+    </tr>
+    <tr>
+      <td colspan="2" align="center"><img src="./frontend/public/screenshots/changelog.png" alt="Changelog" width="400"/></td>
+    </tr>
+    <tr>
+      <td colspan="2" align="center"><b>Changelog</b></td>
     </tr>
   </table>
 </div>
