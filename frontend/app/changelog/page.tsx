@@ -19,6 +19,29 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: '1.3.0',
+    date: '2026-06-16',
+    title: 'Production Hardening & Automation',
+    changes: [
+      { type: 'feature', description: 'CI/CD pipeline — CI (pytest + mypy + build), Deploy (Render + Vercel), Dependency Review (security scan)' },
+      { type: 'feature', description: 'Workspace 3-Zone HUD — upload panel, pipeline visual (UPLOAD → EXTRACT → EXPORT), format strip' },
+      { type: 'feature', description: 'Local extraction history — localStorage persistence, click-to-reload, confidence color coding, INR formatting' },
+      { type: 'feature', description: 'Per-route error boundaries — PARSE_ERR (/workspace), RENDER_ERR (/result), BATCH_ERR (/batch)' },
+      { type: 'security', description: 'Content-Security-Policy + Permissions-Policy security headers in vercel.json' },
+      { type: 'security', description: 'UploadZone — client-side 10MB validation, filename sanitization (HTML char stripping)' },
+      { type: 'security', description: 'Batch CSV export — combined master CSV with CSV injection protection' },
+      { type: 'fix', description: 'ESLint configured — .eslintrc.json with next/core-web-vitals (0 errors, warnings only)' },
+      { type: 'fix', description: 'Backend .env created — LICENSE_KEY_HMAC_SECRET generated, API key placeholders' },
+      { type: 'fix', description: 'Venv recreated — fixed broken pip shebangs from project relocation' },
+      { type: 'fix', description: 'Missing __init__.py added — fixed mypy module resolution in routers/services/models' },
+      { type: 'fix', description: 'render.yaml moved to root with corrected dockerfilePath: ./backend/Dockerfile' },
+      { type: 'improvement', description: 'GitHub issue templates — bug report + feature request + PR template with security checklist' },
+      { type: 'improvement', description: 'robots.txt + sitemap.xml — all 7 public routes indexed, /api/ disallowed' },
+      { type: 'improvement', description: 'Custom SVG favicon — cyan square logo matching design system' },
+      { type: 'improvement', description: 'MIT License added' },
+    ],
+  },
+  {
     version: '1.2.0',
     date: '2026-06-14',
     title: '8-Page SaaS Rebuild',

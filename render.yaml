@@ -3,7 +3,7 @@ services:
     name: invoiceghost-backend
     env: docker
     plan: free
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./backend/Dockerfile
     envVars:
       - key: GEMINI_API_KEY
         sync: false
